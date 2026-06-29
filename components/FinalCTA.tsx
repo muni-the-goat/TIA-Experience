@@ -37,7 +37,7 @@ export default function FinalCTA() {
   );
 
   return (
-    <section ref={root} className="stack-section relative z-40 -mt-[5vh] overflow-hidden bg-gradient-to-b from-sand-4 to-white py-32 text-center text-teal shadow-[0_-50px_90px_-50px_rgba(9,59,63,0.25)] md:py-44">
+    <section ref={root} className="stack-section relative z-40 overflow-hidden bg-white py-32 text-center text-teal md:py-44">
       <div className="cta-glow pointer-events-none absolute left-1/2 top-1/2 h-[60vmin] w-[60vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#D6A63A55,transparent_70%)]" />
       <KhmerBorder className="absolute inset-x-0 top-0 h-5 w-full text-gold opacity-70" />
 

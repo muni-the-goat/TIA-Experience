@@ -77,7 +77,7 @@ export default function Preloader() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="pl-panel h-full flex-1 border-r border-sand-4/60 bg-sand-5 last:border-r-0"
+            className="pl-panel h-full flex-1 border-r border-sand-4/60 bg-white last:border-r-0"
           />
         ))}
       </div>

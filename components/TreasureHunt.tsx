@@ -191,7 +191,7 @@ export default function TreasureHunt() {
   }, [selected]);
 
   return (
-    <section ref={root} id="treasure-hunt" className="relative overflow-hidden bg-sand-5 py-28 md:py-36">
+    <section ref={root} id="treasure-hunt" className="relative overflow-hidden bg-white py-28 md:py-36">
       {/* celebration layer */}
       <div ref={burstLayer} className="pointer-events-none fixed inset-0 z-[700]" aria-hidden />
 
@@ -199,7 +199,7 @@ export default function TreasureHunt() {
         {/* Header */}
         <div className="th-head max-w-3xl">
           <p className="mb-5 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">02</span>
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">03</span>
             The Treasure Hunt
           </p>
           <h2 className="font-display text-5xl font-black leading-[0.95] tracking-tight text-teal md:text-7xl">

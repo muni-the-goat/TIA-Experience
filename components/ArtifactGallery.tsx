@@ -127,14 +127,14 @@ export default function ArtifactGallery() {
     <section
       ref={root}
       id="artifacts"
-      className="relative overflow-hidden bg-gradient-to-b from-sand-5 to-sand-3 text-teal"
+      className="relative overflow-hidden bg-white text-teal"
     >
       {/* Section header (sits above the track on desktop via absolute) */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 mx-auto max-w-content px-6 pt-10 md:pt-12">
         <div className="flex items-end justify-between">
           <div>
             <p className="mb-2 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">01</span>
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">02</span>
               The Collection
             </p>
             <h2 className="font-display text-3xl font-black tracking-tight md:text-5xl">

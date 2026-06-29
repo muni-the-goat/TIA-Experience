@@ -74,11 +74,16 @@ const config: Config = {
         spinslow: {
           to: { transform: "rotate(360deg)" },
         },
+        scrollcue: {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(300%)" },
+        },
       },
       animation: {
         shimmer: "shimmer 6s linear infinite",
         floaty: "floaty 6s ease-in-out infinite",
         spinslow: "spinslow 40s linear infinite",
+        scrollcue: "scrollcue 1.8s cubic-bezier(0.4,0,0.2,1) infinite",
       },
     },
   },

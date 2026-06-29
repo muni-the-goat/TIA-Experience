@@ -18,7 +18,7 @@
   }
 
   body {
-    @apply bg-sand-5 text-teal font-body antialiased;
+    @apply bg-white text-teal font-body antialiased;
     overflow-x: hidden;
   }
 
@@ -32,13 +32,6 @@
   h3,
   h4 {
     @apply font-display;
-  }
-
-  /* Hide native cursor only when the custom cursor is active (desktop, fine pointer) */
-  @media (hover: hover) and (pointer: fine) {
-    body.has-cursor * {
-      cursor: none !important;
-    }
   }
 }
 

@@ -77,7 +77,7 @@ export default function Marquee({
       ref={root}
       aria-hidden
       className={`relative overflow-hidden py-5 md:py-7 ${
-        isGold ? "bg-gold text-teal" : "border-y border-teal/10 bg-transparent text-teal"
+        isGold ? "bg-gold text-teal" : "border-y border-teal/10 bg-sand-4 text-teal"
       }`}
     >
       <div ref={track} className="flex w-max whitespace-nowrap will-change-transform">
