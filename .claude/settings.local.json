@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --version)",
+      "Read(//c/Users/user/.claude/plugins/cache/ui-ux-pro-max-skill/**)",
+      "Read(//c/Users/user/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/**)",
+      "Bash(python scripts/search.py \"cultural museum heritage exhibition immersive interactive event experience treasure hunt gamified\" --design-system -p \"Techo Experience\")",
+      "Bash(python scripts/search.py \"elegant cultural editorial luxury heritage serif display\" --domain typography -n 4)",
+      "Bash(python scripts/search.py \"immersive storytelling scrollytelling interactive experience\" --domain landing -n 3)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm *)",
+      "PowerShell(npm run *)",
+      "mcp__claude_ai_Higgsfield__generate_video",
+      "mcp__claude_ai_Higgsfield__job_status"
+    ]
+  }
+}

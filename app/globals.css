@@ -1,0 +1,136 @@
+@import url("https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #d6a63a;
+  --teal: #093b3f;
+  --sand-5: #f7f6f5;
+  --ease-tia: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-sand-5 text-teal font-body antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--gold);
+    color: #fff;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  /* Hide native cursor only when the custom cursor is active (desktop, fine pointer) */
+  @media (hover: hover) and (pointer: fine) {
+    body.has-cursor * {
+      cursor: none !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gold-text {
+    background: linear-gradient(
+      100deg,
+      #876c51 0%,
+      #d6a63a 30%,
+      #edcf8e 50%,
+      #d6a63a 70%,
+      #876c51 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    @apply animate-shimmer;
+  }
+
+  .gold-line {
+    background: linear-gradient(90deg, transparent, #d6a63a, transparent);
+  }
+
+  /* Used by JS split-text reveal */
+  .reveal-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+  }
+  .reveal-word > span {
+    display: inline-block;
+    will-change: transform;
+  }
+
+  .text-stroke {
+    -webkit-text-stroke: 1.5px #093b3f;
+    color: transparent;
+  }
+
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+}
+
+/* Naga dragon "alive" idle motion — slither + breathe + gold shimmer.
+   Lives on the inner sprite so it stacks cleanly with the GSAP motion-path
+   transform on the parent. Disabled under reduced motion by the guard below. */
+.naga-alive {
+  transform-origin: center;
+  will-change: transform, filter;
+  animation:
+    naga-slither 2.1s ease-in-out infinite,
+    naga-shimmer 2.6s ease-in-out infinite;
+}
+@keyframes naga-slither {
+  0%   { transform: skewX(0deg)   scale(1, 1); }
+  20%  { transform: skewX(-3.2deg) scale(1.025, 0.975); }
+  40%  { transform: skewX(2.2deg)  scale(0.985, 1.02); }
+  60%  { transform: skewX(-2deg)  scale(1.02, 0.985); }
+  80%  { transform: skewX(3deg)   scale(0.98, 1.015); }
+  100% { transform: skewX(0deg)   scale(1, 1); }
+}
+@keyframes naga-shimmer {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50%      { filter: brightness(1.12) saturate(1.15); }
+}
+
+/* Lenis smooth-scroll recommended styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Respect reduced motion — GSAP also guards this, but kill CSS motion too */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
