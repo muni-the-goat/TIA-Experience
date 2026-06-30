@@ -1,291 +1,333 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import BlurText from "@/components/BlurText";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /**
- * Merged Hero + "Experience the Event" intro as one scroll-driven morph.
+ * Hero on the Getty "Tracing Art" model: a flanked composition —
  *
- * Flow (adapted from the scroll-morph-hero concept, rebuilt on the project's
- * GSAP + Lenis stack so page scroll is never hijacked):
- *   1. On reveal, the artifacts fly from a scatter into a RING around the
- *      "Experience" headline.
- *   2. As the user scrolls, the section pins and real scroll progress morphs
- *      the ring into a bottom ARCH while the hero copy fades out and the
- *      "Experience the Event" content (headline · lead · stats) fades in.
- *   3. The section unpins and the page continues into the Collection.
+ *   Experience  〰️[ S-curve of artifact images ]〰️  TIA
+ *
+ * The artifacts stream in along the S-curve (and stay there). The two words
+ * are animated with ReactBits BlurText (powered by Motion), resolving from
+ * blurred to crisp once the preloader lifts. Idle float + pointer parallax +
+ * scroll drift keep the curve alive.
  */
 
-// Every artifact in /public/artifacts — all of them are used in the ring/arch.
 const ART = [
   "/artifacts/IMG_2089.webp",
-  "/artifacts/IMG_2077.webp",
-  "/artifacts/IMG_2079.webp",
-  "/artifacts/IMG_2093.webp",
-  "/artifacts/IMG_2088.webp",
-  "/artifacts/IMG_2090.webp",
-  "/artifacts/IMG_2080.webp",
-  "/artifacts/IMG_2084.webp",
-  "/artifacts/IMG_2091.webp",
-  "/artifacts/IMG_2078.webp",
   "/artifacts/IMG_2085.webp",
+  "/artifacts/IMG_2077.webp",
+  "/artifacts/IMG_2080.webp",
+  "/artifacts/IMG_2090.webp",
+  "/artifacts/IMG_2079.webp",
+  "/artifacts/IMG_2084.webp",
+  "/artifacts/IMG_2093.webp",
+  "/artifacts/IMG_2078.webp",
+  "/artifacts/IMG_2088.webp",
   "/artifacts/IMG_2096.JPG",
+  "/artifacts/IMG_2091.webp",
 ];
 
-const CARD_W = 66;
-const CARD_H = 92;
+const CARD_W = 118;
+const CARD_H = 164;
 
-type Pos = { x: number; y: number; rot: number; scale: number };
+// Stable pseudo-random for deterministic scatter targets.
+const rand = (s: number) => {
+  const x = Math.sin(s) * 43758.5453;
+  return x - Math.floor(x);
+};
 
 export default function ExperienceHero() {
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
 
+  // The flanking words (ReactBits BlurText, powered by Motion) hold until the
+  // preloader lifts, then resolve from blurred to crisp.
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || (window as unknown as { __tiaRevealed?: boolean }).__tiaRevealed) {
+      setRevealed(true);
+      return;
+    }
+    const on = () => setRevealed(true);
+    window.addEventListener("tia:revealed", on, { once: true });
+    const fallback = setTimeout(() => setRevealed(true), 2500); // safety if event missed
+    return () => {
+      window.removeEventListener("tia:revealed", on);
+      clearTimeout(fallback);
+    };
+  }, []);
+
   useGSAP(
     () => {
       const stageEl = stage.current;
       if (!stageEl) return;
+
       const cards = gsap.utils.toArray<HTMLElement>(".xh-card");
       const N = cards.length;
-
-      const circle: Pos[] = [];
-      const arch: Pos[] = [];
-      const scatter: Pos[] = [];
-
-      // Positions are transforms relative to the stage centre (cards are
-      // anchored at 50%/50%). Recomputed on every ScrollTrigger refresh so the
-      // morph stays correct through resizes.
-      const compute = () => {
-        const W = stageEl.clientWidth;
-        const H = stageEl.clientHeight;
-        const isMobile = W < 768;
-        const minDim = Math.min(W, H);
-
-        const Rc = Math.min(minDim * 0.34, 300);
-        const archWidth = Math.min(W * 0.94, 1180);
-        const apexY = H * 0.04;
-        const depth = H * 1.0;
-        const archScale = isMobile ? 1.0 : 1.5;
-
-        for (let i = 0; i < N; i++) {
-          // Ring
-          const a = (i / N) * 360;
-          const ar = (a * Math.PI) / 180;
-          circle[i] = { x: Math.cos(ar) * Rc, y: Math.sin(ar) * Rc, rot: a + 90, scale: 1 };
-
-          // Rainbow arch (parabola, convex up) across the lower half
-          const u = i / (N - 1) - 0.5;
-          const x = u * archWidth;
-          const y = apexY + u * u * depth;
-          const slope = (Math.atan2(2 * u * depth, archWidth) * 180) / Math.PI * 0.7;
-          arch[i] = { x, y, rot: slope, scale: archScale };
-
-          // Initial scatter (computed once)
-          if (!scatter[i]) {
-            scatter[i] = {
-              x: (Math.random() - 0.5) * W * 1.2,
-              y: (Math.random() - 0.5) * H,
-              rot: (Math.random() - 0.5) * 160,
-              scale: 0.4,
-            };
-          }
-        }
-      };
-
-      compute();
-      ScrollTrigger.addEventListener("refreshInit", compute);
-
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const isDesktop = window.matchMedia("(min-width: 768px)").matches;
 
-      // ── Reduced motion: show the final composition statically ──
+      type Pos = { x: number; y: number; rot: number; scale: number };
+      const stream: Pos[] = [];
+      const scatter: Pos[] = [];
+
+      // Card positions are transforms from the stage centre (anchored 50/50),
+      // which sits at the viewport centre — so scatter uses vw/vh from centre.
+      const compute = () => {
+        const W = stageEl.clientWidth;
+        const H = stageEl.clientHeight;
+        const streamW = Math.min(W * 0.82, 560);
+        const amp = Math.min(H * 0.2, 175);
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const cols = 4;
+        const rows = Math.ceil(N / cols);
+        const cellW = (vw * 0.9) / cols;
+        const cellH = (vh * 0.78) / rows;
+
+        for (let i = 0; i < N; i++) {
+          const t = N === 1 ? 0.5 : i / (N - 1);
+          // One full sine across the width — the Getty "S".
+          stream[i] = {
+            x: (t - 0.5) * streamW,
+            y: Math.sin(t * Math.PI * 2) * amp,
+            rot: Math.cos(t * Math.PI * 2) * 12,
+            scale: 0.82,
+          };
+
+          // Even 4-col grid across the viewport + jitter → scattered field.
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          scatter[i] = {
+            x: -vw * 0.45 + cellW * (col + 0.5) + (rand(i * 12.9 + 1) - 0.5) * cellW * 0.55,
+            y: -vh * 0.4 + cellH * (row + 0.5) + (rand(i * 7.7 + 3) - 0.5) * cellH * 0.5,
+            rot: (rand(i * 3.3 + 2) - 0.5) * 30,
+            scale: 0.82,
+          };
+        }
+      };
+      compute();
+      ScrollTrigger.addEventListener("refreshInit", compute);
+      const cleanup = () => ScrollTrigger.removeEventListener("refreshInit", compute);
+
+      // ── Reduced motion: land straight on the curve ──
       if (reduce) {
         cards.forEach((c, i) =>
-          gsap.set(c, { x: arch[i].x, y: arch[i].y, rotation: arch[i].rot, scale: arch[i].scale, autoAlpha: 1 })
+          gsap.set(c, { x: stream[i].x, y: stream[i].y, rotation: stream[i].rot, scale: stream[i].scale, autoAlpha: 1 })
         );
-        gsap.set(".xh-hero", { autoAlpha: 0 });
-        gsap.set(".xh-intro-overlay", { autoAlpha: 1, y: 0 });
-        return () => ScrollTrigger.removeEventListener("refreshInit", compute);
+        return cleanup;
       }
 
-      // ── Floating gold dust (all breakpoints) ──
-      gsap.utils.toArray<HTMLElement>(".xh-dust").forEach((d) => {
-        gsap.to(d, {
-          y: gsap.utils.random(-30, 30),
-          x: gsap.utils.random(-20, 20),
-          opacity: gsap.utils.random(0.15, 0.5),
-          duration: gsap.utils.random(3, 6),
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: gsap.utils.random(0, 2),
-        });
-      });
+      // ── Mobile: the stacked grid below carries it ──
+      if (!isDesktop) return cleanup;
 
-      // ── Mobile: no pin/morph. Hero + stacked intro block handle layout. ──
-      if (!isDesktop) {
-        return () => ScrollTrigger.removeEventListener("refreshInit", compute);
-      }
-
-      // ── Desktop entrance: scatter → ring (plays once the preloader lifts) ──
-      gsap.set(".xh-intro-overlay", { autoAlpha: 0, y: 50 });
+      // Pre-reveal: cards parked on the curve but small + hidden.
       cards.forEach((c, i) =>
-        gsap.set(c, { x: scatter[i].x, y: scatter[i].y, rotation: scatter[i].rot, scale: scatter[i].scale, autoAlpha: 0 })
+        gsap.set(c, { x: stream[i].x, y: stream[i].y, rotation: stream[i].rot, scale: 0.5, autoAlpha: 0 })
       );
 
-      const introTl = gsap.timeline({ paused: true });
+      // ── ENTRANCE: deal the deck onto the S-curve ──
+      const tl = gsap.timeline({ paused: true });
       cards.forEach((c, i) => {
-        introTl.to(
+        tl.to(
           c,
-          {
-            x: circle[i].x,
-            y: circle[i].y,
-            rotation: circle[i].rot,
-            scale: 1,
-            autoAlpha: 1,
-            duration: 1.2,
-            ease: "expo.out",
-          },
+          { scale: () => stream[i].scale, autoAlpha: 1, duration: 0.7, ease: "power3.out" },
           i * 0.05
         );
       });
-      introTl.from(".xh-hero-el", { y: 30, autoAlpha: 0, duration: 0.9, stagger: 0.08, ease: "power3.out" }, 0.35);
 
-      const startEntrance = () => introTl.play();
-      if ((window as unknown as { __tiaRevealed?: boolean }).__tiaRevealed) startEntrance();
-      else window.addEventListener("tia:revealed", startEntrance, { once: true });
+      const start = () => tl.play();
+      if ((window as unknown as { __tiaRevealed?: boolean }).__tiaRevealed) start();
+      else window.addEventListener("tia:revealed", start, { once: true });
 
-      // ── Scroll-driven morph: ring → arch, copy crossfade (pinned) ──
-      const morph = gsap.timeline({
+      // ── Idle float ──
+      gsap.utils.toArray<HTMLElement>(".xh-float").forEach((el) => {
+        gsap.to(el, {
+          y: gsap.utils.random(-10, 10),
+          duration: gsap.utils.random(4, 7),
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: gsap.utils.random(0, 2.5),
+        });
+      });
+
+      // ── Scroll: the S-curve morphs into a scattered field (pinned) ──
+      const scatterTl = gsap.timeline({
         scrollTrigger: {
-          trigger: stageEl,
+          trigger: root.current,
           start: "top top",
-          end: () => "+=" + window.innerHeight * 2.2,
+          end: "+=120%",
           pin: true,
           scrub: 1,
-          anticipatePin: 1,
           invalidateOnRefresh: true,
         },
       });
-
       cards.forEach((c, i) => {
-        morph.fromTo(
+        scatterTl.to(
           c,
-          { x: () => circle[i].x, y: () => circle[i].y, rotation: () => circle[i].rot, scale: 1 },
           {
-            x: () => arch[i].x,
-            y: () => arch[i].y,
-            rotation: () => arch[i].rot,
-            scale: () => arch[i].scale,
-            ease: "none",
-            immediateRender: false,
-            duration: 1,
+            x: () => scatter[i].x,
+            y: () => scatter[i].y,
+            rotation: () => scatter[i].rot,
+            ease: "power2.inOut",
           },
           0
         );
       });
-      morph.to(".xh-hero", { autoAlpha: 0, yPercent: -12, ease: "power1.in", duration: 0.35 }, 0);
-      morph.fromTo(
-        ".xh-intro-overlay",
-        { autoAlpha: 0, y: 50 },
-        { autoAlpha: 1, y: 0, ease: "power2.out", immediateRender: false, duration: 0.4 },
-        0.5
-      );
+      // Words + caption fade as the curve disperses.
+      scatterTl.to(".xh-fade", { autoAlpha: 0, ease: "none" }, 0);
 
-      return () => ScrollTrigger.removeEventListener("refreshInit", compute);
+      // ── Subtle pointer parallax ──
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const setters = cards.map((el, i) => {
+        const px = el.querySelector(".xh-parallax");
+        const depth = 0.5 + Math.abs(i / (N - 1) - 0.5);
+        return {
+          x: gsap.quickTo(px, "x", { duration: 0.9, ease: "power3" }),
+          y: gsap.quickTo(px, "y", { duration: 0.9, ease: "power3" }),
+          depth,
+        };
+      });
+      const onMove = (e: MouseEvent) => {
+        const cx = (e.clientX / vw - 0.5) * 2;
+        const cy = (e.clientY / vh - 0.5) * 2;
+        setters.forEach((s) => {
+          s.x(cx * -10 * s.depth);
+          s.y(cy * -8 * s.depth);
+        });
+      };
+      window.addEventListener("mousemove", onMove);
+
+      return () => {
+        window.removeEventListener("mousemove", onMove);
+        cleanup();
+      };
     },
     { scope: root }
   );
 
+  // The S-curve of cards (shared by the desktop stage).
+  const cards = ART.map((src, i) => (
+    <div
+      key={i}
+      className="xh-card absolute left-1/2 top-1/2 will-change-transform"
+      style={{ width: CARD_W, height: CARD_H, marginLeft: -CARD_W / 2, marginTop: -CARD_H / 2 }}
+    >
+      <div className="xh-parallax h-full w-full">
+        <div className="xh-scroll h-full w-full">
+          <div className="xh-float h-full w-full">
+            <div className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_24px_50px_-26px_rgba(9,59,63,0.5)] ring-1 ring-black/5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ));
+
   return (
     <section ref={root} id="top" className="relative text-teal">
-      <div
-        ref={stage}
-        className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-white"
-      >
-        {/* Warm rising-sun glow */}
-        <div className="pointer-events-none absolute left-1/2 top-[58%] -z-0 h-[80vmin] w-[80vmin] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#D6A63A55_0%,#D6A63A22_35%,transparent_70%)] blur-md" />
+      <div className="relative min-h-dvh overflow-hidden bg-white">
+        {/* Soft warm wash so the white isn't clinical */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[110vmin] w-[110vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(214,166,58,0.10)_0%,transparent_60%)]" />
 
-        {/* Gold dust */}
-        <div className="pointer-events-none absolute inset-0">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <span
-              key={i}
-              className="xh-dust absolute block h-1 w-1 rounded-full bg-gold"
-              style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, opacity: 0.25 }}
-            />
-          ))}
+        {/* Semantic heading (visual version is the animated words below) */}
+        <h1 className="sr-only">Experience TIA — Treasures of Cambodia at Techo International Airport</h1>
+
+        {/* ── Desktop: Experience 〰️[ S-curve ]〰️ TIA ── */}
+        <div className="absolute inset-0 z-10 hidden grid-cols-[1fr_minmax(0,42vw)_1fr] items-center md:grid">
+          {/* Left word */}
+          <div aria-hidden className="xh-fade justify-self-end pr-[1.5vw]">
+            {revealed ? (
+              <BlurText
+                text="Experience"
+                animateBy="letters"
+                direction="top"
+                delay={55}
+                stepDuration={0.4}
+                className="!flex-nowrap justify-end font-editorial text-5xl font-medium leading-none text-teal lg:text-6xl xl:text-7xl"
+              />
+            ) : (
+              <span className="font-editorial text-5xl font-medium leading-none text-teal opacity-0 lg:text-6xl xl:text-7xl">
+                Experience
+              </span>
+            )}
+          </div>
+
+          {/* Centre stage — the S-curve */}
+          <div ref={stage} className="relative h-[66vh] w-full">
+            {cards}
+            <p className="xh-fade absolute bottom-[4%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.4em] text-brown/80">
+              A Heritage Exhibition
+            </p>
+          </div>
+
+          {/* Right word */}
+          <div aria-hidden className="xh-fade justify-self-start pl-[1.5vw]">
+            {revealed ? (
+              <BlurText
+                text="TIA"
+                animateBy="letters"
+                direction="bottom"
+                delay={110}
+                stepDuration={0.45}
+                className="!flex-nowrap justify-start font-editorial text-6xl font-semibold leading-none text-gold lg:text-8xl"
+              />
+            ) : (
+              <span className="font-editorial text-6xl font-semibold leading-none text-gold opacity-0 lg:text-8xl">
+                TIA
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Morphing artifact cards — desktop only */}
-        <div className="pointer-events-none absolute inset-0 z-[5] hidden md:block">
-          {ART.map((src, i) => (
-            <div
-              key={i}
-              className="xh-card absolute left-1/2 top-1/2 will-change-transform"
-              style={{ width: CARD_W, height: CARD_H, marginLeft: -CARD_W / 2, marginTop: -CARD_H / 2 }}
-            >
-              <div className="relative h-full w-full overflow-hidden rounded-xl shadow-[0_30px_60px_-30px_rgba(9,59,63,0.55)] ring-1 ring-white/40">
+        {/* ── Mobile: stacked words + artifact grid ── */}
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-7 px-6 py-24 text-center md:hidden">
+          <div aria-hidden className="font-editorial text-6xl font-medium leading-none text-teal">
+            {revealed ? (
+              <BlurText text="Experience" animateBy="letters" direction="top" delay={55} className="!flex-nowrap justify-center" />
+            ) : (
+              <span className="opacity-0">Experience</span>
+            )}
+          </div>
+
+          <div className="grid w-full max-w-sm grid-cols-3 gap-3">
+            {ART.slice(0, 9).map((src, i) => (
+              <div key={i} className="aspect-[3/4] overflow-hidden rounded-lg ring-1 ring-black/5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-teal/20 to-transparent" />
+                <img src={src} alt="" className="h-full w-full object-cover" draggable={false} loading="lazy" />
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Hero copy — the RING phase */}
-        <div className="xh-hero relative z-10 mx-auto max-w-content px-6 text-center">
-          <h1 className="xh-hero-el font-display text-[18vw] font-black leading-[0.86] tracking-tight md:text-[11rem]">
-            <span className="gold-text">Experience</span>
-          </h1>
+          <div aria-hidden className="font-editorial text-7xl font-semibold leading-none text-gold">
+            {revealed ? (
+              <BlurText text="TIA" animateBy="letters" direction="bottom" delay={110} className="!flex-nowrap justify-center" />
+            ) : (
+              <span className="opacity-0">TIA</span>
+            )}
+          </div>
 
-          <p className="xh-hero-el mx-auto mt-6 max-w-xl text-pretty text-base font-light leading-relaxed text-teal-2 md:text-lg">
-            Step off the plane and into a thousand years of Cambodia. Discover sacred
-            artifacts on display — then hunt for hidden treasures across the terminal.
-          </p>
-        </div>
-
-        {/* "Experience the Event" — the ARCH phase (desktop overlay) */}
-        <div className="xh-intro-overlay pointer-events-none absolute inset-x-0 top-[12%] z-20 mx-auto hidden max-w-content flex-col items-center px-6 text-center md:flex">
-          <h2 className="font-display text-5xl font-black leading-[0.95] tracking-tight text-teal md:text-7xl">
-            Every great journey<br />
-            deserves a great <span className="gold-text">welcome.</span>
-          </h2>
-          <p className="mx-auto mt-7 max-w-xl text-pretty text-lg font-light leading-relaxed text-teal-2">
-            <span className="font-semibold text-teal">Treasures of Cambodia</span> brings the soul of
-            the Kingdom into the heart of Techo International Airport — gathered for every traveller to
-            witness, between one horizon and the next.
+          <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-brown/80">
+            A Heritage Exhibition
           </p>
         </div>
       </div>
 
-      {/* Anchor target: on desktop lands at the morph's climax; on mobile at the intro block */}
+      {/* Anchor for the nav */}
       <div id="exhibition" aria-hidden className="h-0" />
-
-      {/* Mobile intro block — stacked, no morph */}
-      <div className="relative bg-white px-6 py-20 md:hidden">
-        <h2 className="font-display text-4xl font-black leading-[0.98] tracking-tight text-teal">
-          Every great journey deserves a great <span className="gold-text">welcome.</span>
-        </h2>
-        <p className="mt-5 max-w-xl text-pretty text-base font-light leading-relaxed text-teal-2">
-          <span className="font-semibold text-teal">Treasures of Cambodia</span> brings the soul of the
-          Kingdom into the heart of Techo International Airport — gathered for every traveller to witness,
-          between one horizon and the next.
-        </p>
-        <div className="mt-8 grid grid-cols-3 gap-2">
-          {ART.map((src, i) => (
-            <div key={i} className="aspect-[3/4] overflow-hidden rounded-lg ring-1 ring-white/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" draggable={false} loading="lazy" />
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

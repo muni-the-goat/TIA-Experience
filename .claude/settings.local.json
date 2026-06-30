@@ -12,7 +12,9 @@
       "PowerShell(npm run *)",
       "mcp__claude_ai_Higgsfield__generate_video",
       "mcp__claude_ai_Higgsfield__job_status",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "WebFetch(domain:www.getty.edu)",
+      "Bash(npx --yes shadcn@latest add @reactbits/BlurText-TS-TW --yes --overwrite)"
     ]
   }
 }

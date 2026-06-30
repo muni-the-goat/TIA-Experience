@@ -45,6 +45,7 @@ const config: Config = {
       },
       fontFamily: {
         display: ['"Titillium Web"', "system-ui", "sans-serif"],
+        editorial: ['"Cormorant Garamond"', "Georgia", "Times New Roman", "serif"],
         body: [
           "-apple-system",
           "BlinkMacSystemFont",

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Titillium+Web:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -38,6 +38,18 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Caption cross-fade in the sticky artifact stage */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .gold-text {
