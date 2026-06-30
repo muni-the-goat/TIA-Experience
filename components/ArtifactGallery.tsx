@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { artifacts, type Artifact } from "@/lib/data";
 import { Motif } from "./KhmerMotifs";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -195,15 +196,6 @@ export default function ArtifactGallery() {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<Artifact | null>(null);
 
-  // Lock body scroll while the lightbox is open.
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.body.style.overflow = lightbox ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [lightbox]);
-
   useGSAP(
     () => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -313,24 +305,9 @@ export default function ArtifactGallery() {
         )}
       </div>
 
-      {/* ── Intro: editorial headline ── */}
-      <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-3xl flex-col items-center justify-center px-6 text-center">
-        <p className="mb-8 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">
-            02
-          </span>
-          The Collection
-        </p>
-        <h2 className="font-editorial text-[2.6rem] font-medium leading-[1.08] text-teal md:text-[4.25rem]">
-          A thousand years of Khmer devotion,
-          <span className="italic text-brown-3"> drifting through the halls</span> from
-          Angkor to Techo.
-        </h2>
-        <p className="mt-8 max-w-xl font-editorial text-lg italic text-teal-2 md:text-2xl">
-          Twelve sacred treasures — carved in stone, gathered here as a single journey
-          through the sculptural memory of Cambodia.
-        </p>
-      </div>
+      {/* The collection intro now lives in the hero (it resolves into the
+          cleared centre as the hero images ring out), so the gallery opens
+          straight into the artifact-by-artifact sticky composition. */}
 
       {/* ── Gallery: one sticky composition (image + text) that cross-fades.
           Empty spacer sections below provide the scroll distance and drive
@@ -356,7 +333,7 @@ export default function ArtifactGallery() {
                 <ArtImg
                   a={a}
                   className="h-full w-full"
-                  imgClassName="h-full w-full object-cover object-[center_25%] transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+                  imgClassName="h-full w-full object-cover object-[center_25%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                 />
                 <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-teal/15 to-transparent" />
               </button>
@@ -427,57 +404,46 @@ export default function ArtifactGallery() {
         </span>
       </div>
 
-      {/* ── Lightbox ── */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-teal/70 p-6 backdrop-blur-sm"
-          onClick={() => setLightbox(null)}
-        >
-          <div
-            className="relative grid max-h-[88vh] w-full max-w-4xl gap-8 overflow-y-auto rounded-2xl bg-[#fbfaf8] p-6 shadow-2xl md:grid-cols-2 md:p-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setLightbox(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-teal text-white transition-transform hover:scale-110"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            <ArtImg
-              a={lightbox}
-              className="aspect-[4/5] w-full rounded-lg"
-              imgClassName="aspect-[4/5] w-full rounded-lg object-cover object-[center_25%]"
-            />
-
-            <div className="flex flex-col justify-center">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brown">
-                {lightbox.era}
-              </p>
-              <h3 className="font-editorial text-4xl font-medium leading-tight text-teal">
-                {lightbox.name}
-              </h3>
-              <div className="my-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-teal-2">
-                <span>
-                  <span className="font-semibold text-brown-3">Origin · </span>
-                  {lightbox.origin}
-                </span>
-                <span>
-                  <span className="font-semibold text-brown-3">Material · </span>
-                  {lightbox.material}
-                </span>
+      {/* ── Lightbox (shadcn Dialog · Radix) ── */}
+      <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
+        <DialogContent className="grid max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-4xl gap-0 overflow-y-auto rounded-2xl p-0 md:max-h-none md:grid-cols-2 md:overflow-hidden">
+          {lightbox && (
+            <>
+              {/* Image — top on mobile, fixed-height left column on desktop */}
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-sand-4 sm:aspect-[5/4] md:aspect-auto md:h-[30rem]">
+                <ArtImg
+                  a={lightbox}
+                  className="h-full w-full"
+                  imgClassName="h-full w-full object-cover object-[center_25%]"
+                />
               </div>
-              <p className="font-editorial text-xl leading-relaxed text-teal-2">
-                {lightbox.blurb}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
+              {/* Details */}
+              <div className="flex flex-col justify-center p-6 md:p-9">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brown">
+                  {lightbox.era}
+                </p>
+                <DialogTitle className="font-editorial text-3xl font-medium leading-tight text-teal md:text-4xl">
+                  {lightbox.name}
+                </DialogTitle>
+                <div className="my-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-teal-2">
+                  <span>
+                    <span className="font-semibold text-brown-3">Origin · </span>
+                    {lightbox.origin}
+                  </span>
+                  <span>
+                    <span className="font-semibold text-brown-3">Material · </span>
+                    {lightbox.material}
+                  </span>
+                </div>
+                <DialogDescription className="font-editorial text-lg leading-relaxed text-teal-2 md:text-xl">
+                  {lightbox.blurb}
+                </DialogDescription>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

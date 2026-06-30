@@ -90,15 +90,12 @@ export default function ExperienceHero() {
         const streamW = Math.min(W * 0.82, 560);
         const ampY = Math.min(H * 0.2, 175);
         // Mobile: vertical S (y spreads down, x waves) — like Getty on phones.
-        const streamH = H * 0.86;
-        const ampX = Math.min(W * 0.3, 130);
+        // Kept compact so the curve clears the caption + the TIA word below.
+        const streamH = H * 0.62;
+        const ampX = Math.min(W * 0.27, 115);
 
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const cols = mobile ? 3 : 4;
-        const rows = Math.ceil(N / cols);
-        const cellW = (vw * 0.92) / cols;
-        const cellH = (vh * 0.74) / rows;
 
         for (let i = 0; i < N; i++) {
           const t = N === 1 ? 0.5 : i / (N - 1);
@@ -117,13 +114,19 @@ export default function ExperienceHero() {
                 scale: cardScale,
               };
 
-          // Even grid across the viewport + jitter → scattered field.
-          const col = i % cols;
-          const row = Math.floor(i / cols);
+          // Even ring around the centre, with a gap at the top for the logo, so
+          // the images frame a clear middle for the editorial text and never
+          // pile up. Only the radius jitters (angles stay evenly spaced).
+          const topAngle = -Math.PI / 2;
+          const gapFrac = 0.2; // skip the top 20% of the ring (logo zone)
+          const f = gapFrac / 2 + (N === 1 ? 0.5 : i / (N - 1)) * (1 - gapFrac);
+          const ang = topAngle + f * Math.PI * 2;
+          const rx = vw * (0.33 + rand(i * 4.3 + 2) * 0.08);
+          const ry = vh * (0.3 + rand(i * 6.7 + 8) * 0.08);
           scatter[i] = {
-            x: -vw * 0.46 + cellW * (col + 0.5) + (rand(i * 12.9 + 1) - 0.5) * cellW * 0.5,
-            y: -vh * 0.38 + cellH * (row + 0.5) + (rand(i * 7.7 + 3) - 0.5) * cellH * 0.5,
-            rot: (rand(i * 3.3 + 2) - 0.5) * 30,
+            x: Math.cos(ang) * rx,
+            y: Math.sin(ang) * ry,
+            rot: (rand(i * 3.3 + 2) - 0.5) * 26,
             scale: cardScale,
           };
         }
@@ -132,18 +135,20 @@ export default function ExperienceHero() {
       ScrollTrigger.addEventListener("refreshInit", compute);
       const cleanup = () => ScrollTrigger.removeEventListener("refreshInit", compute);
 
-      // ── Reduced motion: land straight on the curve ──
+      // ── Reduced motion: show the composed end-state (images ringed, text in) ──
       if (reduce) {
         cards.forEach((c, i) =>
-          gsap.set(c, { x: stream[i].x, y: stream[i].y, rotation: stream[i].rot, scale: stream[i].scale, autoAlpha: 1 })
+          gsap.set(c, { x: scatter[i].x, y: scatter[i].y, rotation: scatter[i].rot, scale: scatter[i].scale, autoAlpha: 1 })
         );
+        gsap.set(".xh-fade", { autoAlpha: 0 });
         return cleanup;
       }
 
-      // Pre-reveal: cards parked on the curve but small + hidden.
+      // Pre-reveal: cards parked on the curve (small + hidden); intro waits.
       cards.forEach((c, i) =>
         gsap.set(c, { x: stream[i].x, y: stream[i].y, rotation: stream[i].rot, scale: 0.5, autoAlpha: 0 })
       );
+      gsap.set(".xh-intro-el", { autoAlpha: 0, y: 40, filter: "blur(12px)" });
 
       // ── ENTRANCE: deal the deck onto the S-curve ──
       const tl = gsap.timeline({ paused: true });
@@ -171,17 +176,18 @@ export default function ExperienceHero() {
         });
       });
 
-      // ── Scroll: the S-curve morphs into a scattered field (pinned) ──
+      // ── Scroll (pinned): the curve rings out, then the collection text moves in ──
       const scatterTl = gsap.timeline({
         scrollTrigger: {
           trigger: root.current,
           start: "top top",
-          end: "+=120%",
+          end: "+=160%",
           pin: true,
           scrub: 1,
           invalidateOnRefresh: true,
         },
       });
+      // Phase 1 — the curve fans out into a ring around the centre.
       cards.forEach((c, i) => {
         scatterTl.to(
           c,
@@ -190,12 +196,19 @@ export default function ExperienceHero() {
             y: () => scatter[i].y,
             rotation: () => scatter[i].rot,
             ease: "power2.inOut",
+            duration: 1,
           },
           0
         );
       });
-      // Words + caption fade as the curve disperses.
-      scatterTl.to(".xh-fade", { autoAlpha: 0, ease: "none" }, 0);
+      // Experience / TIA / caption fade out early.
+      scatterTl.to(".xh-fade", { autoAlpha: 0, ease: "none", duration: 0.35 }, 0);
+      // Phase 2 — the collection text resolves into the cleared centre.
+      scatterTl.to(
+        ".xh-intro-el",
+        { autoAlpha: 1, y: 0, filter: "blur(0px)", ease: "power3.out", stagger: 0.08, duration: 0.55 },
+        0.55
+      );
 
       // ── Subtle pointer parallax (desktop pointers only) ──
       const setters = cards.map((el, i) => {
@@ -227,7 +240,7 @@ export default function ExperienceHero() {
 
   return (
     <section ref={root} id="top" className="relative text-teal">
-      <div className="relative min-h-dvh overflow-hidden bg-white">
+      <div className="relative min-h-dvh overflow-hidden bg-[#fbfaf8]">
         {/* Soft warm wash so the white isn't clinical */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[110vmin] w-[110vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(214,166,58,0.10)_0%,transparent_60%)]" />
 
@@ -294,6 +307,25 @@ export default function ExperienceHero() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* Collection intro — resolves into the cleared centre as the images ring out */}
+        <div className="xh-intro pointer-events-none absolute inset-0 z-20 mx-auto flex max-w-3xl flex-col items-center justify-center px-6 text-center">
+          <p className="xh-intro-el mb-6 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">
+              02
+            </span>
+            The Collection
+          </p>
+          <h2 className="xh-intro-el font-editorial text-[2rem] font-medium leading-[1.08] text-teal sm:text-[2.6rem] md:text-[4rem]">
+            A thousand years of Khmer devotion,
+            <span className="italic text-brown-3"> drifting through the halls</span> from
+            Angkor to Techo.
+          </h2>
+          <p className="xh-intro-el mt-6 max-w-xl font-editorial text-base italic text-teal-2 md:text-xl">
+            Twelve sacred treasures — carved in stone, gathered here as a single journey
+            through the sculptural memory of Cambodia.
+          </p>
         </div>
       </div>
 
