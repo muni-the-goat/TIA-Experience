@@ -13,10 +13,10 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *
  *   Experience  〰️[ S-curve of artifact images ]〰️  TIA
  *
- * The artifacts stream in along the S-curve (and stay there). The two words
- * are animated with ReactBits BlurText (powered by Motion), resolving from
- * blurred to crisp once the preloader lifts. Idle float + pointer parallax +
- * scroll drift keep the curve alive.
+ * The artifacts stream onto the S-curve, then morph into a scattered field on
+ * scroll (pinned + scrubbed). The two words animate with ReactBits BlurText
+ * (Motion). Works on every breakpoint: a 3-column grid on desktop, a stacked
+ * column on mobile, with phone-tuned card sizing.
  */
 
 const ART = [
@@ -73,7 +73,6 @@ export default function ExperienceHero() {
       const cards = gsap.utils.toArray<HTMLElement>(".xh-card");
       const N = cards.length;
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const isDesktop = window.matchMedia("(min-width: 768px)").matches;
 
       type Pos = { x: number; y: number; rot: number; scale: number };
       const stream: Pos[] = [];
@@ -84,34 +83,48 @@ export default function ExperienceHero() {
       const compute = () => {
         const W = stageEl.clientWidth;
         const H = stageEl.clientHeight;
+        const mobile = window.innerWidth < 768;
+        const cardScale = mobile ? 0.5 : 0.82;
+
+        // Desktop: horizontal S (x spreads, y waves).
         const streamW = Math.min(W * 0.82, 560);
-        const amp = Math.min(H * 0.2, 175);
+        const ampY = Math.min(H * 0.2, 175);
+        // Mobile: vertical S (y spreads down, x waves) — like Getty on phones.
+        const streamH = H * 0.86;
+        const ampX = Math.min(W * 0.3, 130);
 
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const cols = 4;
+        const cols = mobile ? 3 : 4;
         const rows = Math.ceil(N / cols);
-        const cellW = (vw * 0.9) / cols;
-        const cellH = (vh * 0.78) / rows;
+        const cellW = (vw * 0.92) / cols;
+        const cellH = (vh * 0.74) / rows;
 
         for (let i = 0; i < N; i++) {
           const t = N === 1 ? 0.5 : i / (N - 1);
-          // One full sine across the width — the Getty "S".
-          stream[i] = {
-            x: (t - 0.5) * streamW,
-            y: Math.sin(t * Math.PI * 2) * amp,
-            rot: Math.cos(t * Math.PI * 2) * 12,
-            scale: 0.82,
-          };
+          // One full sine — the Getty "S" (horizontal on desktop, vertical on mobile).
+          stream[i] = mobile
+            ? {
+                x: Math.sin(t * Math.PI * 2) * ampX,
+                y: (t - 0.5) * streamH,
+                rot: Math.cos(t * Math.PI * 2) * 10,
+                scale: cardScale,
+              }
+            : {
+                x: (t - 0.5) * streamW,
+                y: Math.sin(t * Math.PI * 2) * ampY,
+                rot: Math.cos(t * Math.PI * 2) * 12,
+                scale: cardScale,
+              };
 
-          // Even 4-col grid across the viewport + jitter → scattered field.
+          // Even grid across the viewport + jitter → scattered field.
           const col = i % cols;
           const row = Math.floor(i / cols);
           scatter[i] = {
-            x: -vw * 0.45 + cellW * (col + 0.5) + (rand(i * 12.9 + 1) - 0.5) * cellW * 0.55,
-            y: -vh * 0.4 + cellH * (row + 0.5) + (rand(i * 7.7 + 3) - 0.5) * cellH * 0.5,
+            x: -vw * 0.46 + cellW * (col + 0.5) + (rand(i * 12.9 + 1) - 0.5) * cellW * 0.5,
+            y: -vh * 0.38 + cellH * (row + 0.5) + (rand(i * 7.7 + 3) - 0.5) * cellH * 0.5,
             rot: (rand(i * 3.3 + 2) - 0.5) * 30,
-            scale: 0.82,
+            scale: cardScale,
           };
         }
       };
@@ -126,9 +139,6 @@ export default function ExperienceHero() {
         );
         return cleanup;
       }
-
-      // ── Mobile: the stacked grid below carries it ──
-      if (!isDesktop) return cleanup;
 
       // Pre-reveal: cards parked on the curve but small + hidden.
       cards.forEach((c, i) =>
@@ -187,9 +197,7 @@ export default function ExperienceHero() {
       // Words + caption fade as the curve disperses.
       scatterTl.to(".xh-fade", { autoAlpha: 0, ease: "none" }, 0);
 
-      // ── Subtle pointer parallax ──
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      // ── Subtle pointer parallax (desktop pointers only) ──
       const setters = cards.map((el, i) => {
         const px = el.querySelector(".xh-parallax");
         const depth = 0.5 + Math.abs(i / (N - 1) - 0.5);
@@ -200,8 +208,8 @@ export default function ExperienceHero() {
         };
       });
       const onMove = (e: MouseEvent) => {
-        const cx = (e.clientX / vw - 0.5) * 2;
-        const cy = (e.clientY / vh - 0.5) * 2;
+        const cx = (e.clientX / window.innerWidth - 0.5) * 2;
+        const cy = (e.clientY / window.innerHeight - 0.5) * 2;
         setters.forEach((s) => {
           s.x(cx * -10 * s.depth);
           s.y(cy * -8 * s.depth);
@@ -217,39 +225,19 @@ export default function ExperienceHero() {
     { scope: root }
   );
 
-  // The S-curve of cards (shared by the desktop stage).
-  const cards = ART.map((src, i) => (
-    <div
-      key={i}
-      className="xh-card absolute left-1/2 top-1/2 will-change-transform"
-      style={{ width: CARD_W, height: CARD_H, marginLeft: -CARD_W / 2, marginTop: -CARD_H / 2 }}
-    >
-      <div className="xh-parallax h-full w-full">
-        <div className="xh-scroll h-full w-full">
-          <div className="xh-float h-full w-full">
-            <div className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_24px_50px_-26px_rgba(9,59,63,0.5)] ring-1 ring-black/5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  ));
-
   return (
     <section ref={root} id="top" className="relative text-teal">
       <div className="relative min-h-dvh overflow-hidden bg-white">
         {/* Soft warm wash so the white isn't clinical */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[110vmin] w-[110vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(214,166,58,0.10)_0%,transparent_60%)]" />
 
-        {/* Semantic heading (visual version is the animated words below) */}
+        {/* Semantic heading (visual version is the animated words) */}
         <h1 className="sr-only">Experience TIA — Treasures of Cambodia at Techo International Airport</h1>
 
-        {/* ── Desktop: Experience 〰️[ S-curve ]〰️ TIA ── */}
-        <div className="absolute inset-0 z-10 hidden grid-cols-[1fr_minmax(0,42vw)_1fr] items-center md:grid">
-          {/* Left word */}
-          <div aria-hidden className="xh-fade justify-self-end pr-[1.5vw]">
+        {/* Stacked column on mobile · Experience 〰️[ S-curve ]〰️ TIA grid on desktop */}
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-4 pt-24 pb-10 md:grid md:grid-cols-[1fr_42vw_1fr] md:items-center md:gap-0 md:p-0">
+          {/* Left / top word */}
+          <div aria-hidden className="xh-fade md:justify-self-end md:pr-[1.5vw]">
             {revealed ? (
               <BlurText
                 text="Experience"
@@ -257,25 +245,40 @@ export default function ExperienceHero() {
                 direction="top"
                 delay={55}
                 stepDuration={0.4}
-                className="!flex-nowrap justify-end font-editorial text-5xl font-medium leading-none text-teal lg:text-6xl xl:text-7xl"
+                className="!flex-nowrap justify-center font-editorial text-5xl font-medium leading-none text-teal md:justify-end md:text-6xl xl:text-7xl"
               />
             ) : (
-              <span className="font-editorial text-5xl font-medium leading-none text-teal opacity-0 lg:text-6xl xl:text-7xl">
+              <span className="font-editorial text-5xl font-medium leading-none text-teal opacity-0 md:text-6xl xl:text-7xl">
                 Experience
               </span>
             )}
           </div>
 
           {/* Centre stage — the S-curve */}
-          <div ref={stage} className="relative h-[66vh] w-full">
-            {cards}
-            <p className="xh-fade absolute bottom-[4%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.4em] text-brown/80">
+          <div ref={stage} className="relative w-full flex-1 md:h-[66vh] md:flex-none">
+            {ART.map((src, i) => (
+              <div
+                key={i}
+                className="xh-card absolute left-1/2 top-1/2 will-change-transform"
+                style={{ width: CARD_W, height: CARD_H, marginLeft: -CARD_W / 2, marginTop: -CARD_H / 2 }}
+              >
+                <div className="xh-parallax h-full w-full">
+                  <div className="xh-float h-full w-full">
+                    <div className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_24px_50px_-26px_rgba(9,59,63,0.5)] ring-1 ring-black/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <p className="xh-fade absolute bottom-[3%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.35em] text-brown/80 md:text-[11px] md:tracking-[0.4em]">
               A Heritage Exhibition
             </p>
           </div>
 
-          {/* Right word */}
-          <div aria-hidden className="xh-fade justify-self-start pl-[1.5vw]">
+          {/* Right / bottom word */}
+          <div aria-hidden className="xh-fade md:justify-self-start md:pl-[1.5vw]">
             {revealed ? (
               <BlurText
                 text="TIA"
@@ -283,46 +286,14 @@ export default function ExperienceHero() {
                 direction="bottom"
                 delay={110}
                 stepDuration={0.45}
-                className="!flex-nowrap justify-start font-editorial text-6xl font-semibold leading-none text-gold lg:text-8xl"
+                className="!flex-nowrap justify-center font-editorial text-6xl font-semibold leading-none text-gold md:justify-start md:text-8xl"
               />
             ) : (
-              <span className="font-editorial text-6xl font-semibold leading-none text-gold opacity-0 lg:text-8xl">
+              <span className="font-editorial text-6xl font-semibold leading-none text-gold opacity-0 md:text-8xl">
                 TIA
               </span>
             )}
           </div>
-        </div>
-
-        {/* ── Mobile: stacked words + artifact grid ── */}
-        <div className="flex min-h-dvh flex-col items-center justify-center gap-7 px-6 py-24 text-center md:hidden">
-          <div aria-hidden className="font-editorial text-6xl font-medium leading-none text-teal">
-            {revealed ? (
-              <BlurText text="Experience" animateBy="letters" direction="top" delay={55} className="!flex-nowrap justify-center" />
-            ) : (
-              <span className="opacity-0">Experience</span>
-            )}
-          </div>
-
-          <div className="grid w-full max-w-sm grid-cols-3 gap-3">
-            {ART.slice(0, 9).map((src, i) => (
-              <div key={i} className="aspect-[3/4] overflow-hidden rounded-lg ring-1 ring-black/5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover" draggable={false} loading="lazy" />
-              </div>
-            ))}
-          </div>
-
-          <div aria-hidden className="font-editorial text-7xl font-semibold leading-none text-gold">
-            {revealed ? (
-              <BlurText text="TIA" animateBy="letters" direction="bottom" delay={110} className="!flex-nowrap justify-center" />
-            ) : (
-              <span className="opacity-0">TIA</span>
-            )}
-          </div>
-
-          <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-brown/80">
-            A Heritage Exhibition
-          </p>
         </div>
       </div>
 

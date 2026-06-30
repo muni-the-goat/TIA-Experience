@@ -393,6 +393,23 @@
   }
 }
 
+@media (max-width: 1024px) {
+  /* Below the desktop layout, render the index inline after the label so it
+     scales with the text and can never overlap it. */
+  .sm-panel-item {
+    padding-right: 0;
+  }
+
+  .sm-panel-list[data-numbering] .sm-panel-item::after {
+    position: static;
+    top: auto;
+    right: auto;
+    margin-left: 0.35em;
+    font-size: 0.4em;
+    vertical-align: super;
+  }
+}
+
 @media (max-width: 640px) {
   .staggered-menu-panel {
     width: 100%;
@@ -402,6 +419,37 @@
   }
 
   .sm-panel-item {
-    font-size: 2.4rem;
+    font-size: 2rem;
+    letter-spacing: -0.5px;
+  }
+}
+
+/* Very narrow phones */
+@media (max-width: 380px) {
+  .sm-panel-item {
+    font-size: 1.7rem;
+  }
+
+  .staggered-menu-panel {
+    padding: 6em 1.25em 1.5em 1.25em;
+  }
+}
+
+/* Short / landscape phones — keep everything reachable, scroll if needed */
+@media (max-height: 560px) {
+  .staggered-menu-panel {
+    padding-top: 5em;
+  }
+
+  .sm-panel-item {
+    font-size: 1.7rem;
+  }
+
+  .sm-panel-list {
+    gap: 0.15rem;
+  }
+
+  .sm-socials {
+    padding-top: 1.25rem;
   }
 }

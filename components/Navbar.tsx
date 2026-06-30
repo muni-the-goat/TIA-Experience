@@ -4,9 +4,9 @@ import StaggeredMenu, { type StaggeredMenuItem, type StaggeredMenuSocialItem } f
 
 const menuItems: StaggeredMenuItem[] = [
   { label: "Home", ariaLabel: "Back to the top", link: "#top" },
-  { label: "Exhibition", ariaLabel: "Enter the exhibition", link: "#exhibition" },
-  { label: "Artifacts", ariaLabel: "Browse the artifacts", link: "#artifacts" },
+  { label: "The Collection", ariaLabel: "Browse the Treasures of Cambodia", link: "#artifacts" },
   { label: "Treasure Hunt", ariaLabel: "Start the treasure hunt", link: "#treasure-hunt" },
+  { label: "Plan Your Visit", ariaLabel: "Plan your visit", link: "#visit" },
 ];
 
 const socialItems: StaggeredMenuSocialItem[] = [
