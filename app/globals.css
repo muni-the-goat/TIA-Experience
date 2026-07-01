@@ -38,6 +38,27 @@
     text-wrap: balance;
   }
 
+  /* Full-viewport stage height with a 100vh fallback for browsers/webviews
+     that don't support svh (some mobile in-app browsers). Without the
+     fallback, `height: 100svh` is ignored there and the sticky gallery's
+     empty scroll spacers collapse to 0 — breaking the pinned scroll.
+     Uses @supports (not stacked declarations) so the CSS minifier can't
+     drop the fallback. */
+  .tia-stage-h {
+    height: 100vh;
+  }
+  .tia-stage-mt {
+    margin-top: -100vh;
+  }
+  @supports (height: 100svh) {
+    .tia-stage-h {
+      height: 100svh;
+    }
+    .tia-stage-mt {
+      margin-top: -100svh;
+    }
+  }
+
   /* Caption cross-fade in the sticky artifact stage */
   @keyframes fadeUp {
     from {

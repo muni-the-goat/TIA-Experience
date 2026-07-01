@@ -322,7 +322,7 @@ export default function ArtifactGallery() {
           which artifact is active. ── */}
       <div className="relative">
         {/* Sticky stage — image and its description stay together, centred */}
-        <div className="pointer-events-none sticky top-0 z-10 flex h-[100svh] flex-col items-center justify-center px-6">
+        <div className="tia-stage-h pointer-events-none sticky top-0 z-10 flex flex-col items-center justify-center px-6">
           <div className="relative aspect-[4/5] w-[min(66vw,17rem)] md:w-[min(50vw,12.5rem)]">
             {artifacts.map((a, i) => (
               <button
@@ -385,9 +385,9 @@ export default function ArtifactGallery() {
         </div>
 
         {/* Invisible spacers — one screen per artifact — drive the active state */}
-        <div className="-mt-[100svh]" aria-hidden>
+        <div className="tia-stage-mt" aria-hidden>
           {artifacts.map((a, i) => (
-            <div key={a.id} data-idx={i} className="chapter h-[100svh]" />
+            <div key={a.id} data-idx={i} className="chapter tia-stage-h" />
           ))}
         </div>
       </div>
