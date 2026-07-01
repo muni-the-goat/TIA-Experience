@@ -42,7 +42,7 @@ export default function TreasureHunt() {
 
       // Reduced motion — show the composed end state, no scroll-driven reveals.
       mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set([".th-word", ".th-note", ".th-mapwrap"], {
+        gsap.set([".th-word", ".th-intro", ".th-note", ".th-mapwrap"], {
           autoAlpha: 1,
           filter: "blur(0px)",
           y: 0,
@@ -79,6 +79,19 @@ export default function TreasureHunt() {
             ease: "power2.out",
             stagger: 0.12,
             scrollTrigger: { trigger: ".th-head", start: "top 82%", end: "top 42%", scrub: 1 },
+          }
+        );
+
+        // ── Intro line resolves just after the headline, same blur language ──
+        gsap.fromTo(
+          ".th-intro",
+          { autoAlpha: 0, filter: "blur(8px)", y: 22 },
+          {
+            autoAlpha: 1,
+            filter: "blur(0px)",
+            y: 0,
+            ease: "power2.out",
+            scrollTrigger: { trigger: ".th-head", start: "top 70%", end: "top 38%", scrub: 1 },
           }
         );
 
@@ -152,7 +165,7 @@ export default function TreasureHunt() {
               </span>
             ))}
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-pretty text-lg font-light leading-relaxed text-teal-2">
+          <p className="th-intro mx-auto mt-6 max-w-xl text-pretty text-lg font-light leading-relaxed text-teal-2">
             Cambodia&rsquo;s sacred artifacts are displayed at{" "}
             <span className="font-medium text-teal">every gate inside Techo International Airport</span>.
             Explore the terminal on the 3D map below and discover them as you travel.
