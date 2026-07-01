@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -105,16 +106,18 @@ export default function TreasureHunt() {
       {/* Floating archive drifting down from the gallery — the visual bridge */}
       <div className="th-bridge pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block" aria-hidden>
         {BRIDGE.map((b, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             key={i}
             src={b.src}
             alt=""
+            width={b.w}
+            height={Math.round(b.w * 1.3)}
             loading="lazy"
+            sizes={`${b.w}px`}
             draggable={false}
             data-speed={b.speed}
             className="th-bridge-img absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.4)] grayscale-[0.2]"
-            style={{ top: `${b.top}%`, left: `${b.left}%`, width: b.w, opacity: b.op, rotate: `${b.rot}deg` }}
+            style={{ top: `${b.top}%`, left: `${b.left}%`, opacity: b.op, rotate: `${b.rot}deg` }}
           />
         ))}
       </div>

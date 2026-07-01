@@ -43,13 +43,13 @@ export default function Preloader() {
       const counter = { v: 0 };
       const tl = gsap.timeline({ onComplete: reveal });
 
-      tl.from(".pl-logo", { y: 28, autoAlpha: 0, duration: 0.9, ease: "power3.out" })
-        .from(".pl-label", { autoAlpha: 0, duration: 0.6 }, "-=0.5")
+      tl.from(".pl-logo", { y: 24, autoAlpha: 0, duration: 0.5, ease: "power3.out" })
+        .from(".pl-label", { autoAlpha: 0, duration: 0.35 }, "-=0.35")
         .to(
           counter,
           {
             v: 100,
-            duration: 1.7,
+            duration: 0.8,
             ease: "power2.inOut",
             onUpdate: () => {
               const val = Math.round(counter.v);
@@ -57,12 +57,12 @@ export default function Preloader() {
               if (fill.current) fill.current.style.transform = `scaleX(${counter.v / 100})`;
             },
           },
-          "-=0.4"
+          "-=0.25"
         )
-        .to(".pl-content", { autoAlpha: 0, y: -24, duration: 0.5, ease: "power2.in" }, "+=0.15")
+        .to(".pl-content", { autoAlpha: 0, y: -24, duration: 0.35, ease: "power2.in" }, "+=0.05")
         .to(
           ".pl-panel",
-          { yPercent: -100, duration: 1.05, ease: "expo.inOut", stagger: 0.07 },
+          { yPercent: -100, duration: 0.6, ease: "expo.inOut", stagger: 0.04 },
           "-=0.1"
         )
         .set(root.current, { autoAlpha: 0, pointerEvents: "none" });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -285,8 +286,15 @@ export default function ExperienceHero() {
                 <div className="xh-parallax h-full w-full">
                   <div className="xh-float h-full w-full">
                     <div className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_24px_50px_-26px_rgba(9,59,63,0.5)] ring-1 ring-black/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
+                      <Image
+                        src={src}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 120px, 200px"
+                        className="object-cover"
+                        draggable={false}
+                        priority={i < 4}
+                      />
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,23 @@
 import type { Metadata, Viewport } from "next";
+import { Titillium_Web, Cormorant_Garamond } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
+
+// Self-hosted + preloaded via next/font — replaces the render-blocking
+// Google Fonts @import that was gating first paint.
+const display = Titillium_Web({
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "900"],
+  variable: "--font-display",
+  display: "swap",
+});
+const editorial = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-editorial",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Experience · Techo International Airport",
@@ -34,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${editorial.variable}`}>
       <body>
         {children}
         <SpeedInsights />

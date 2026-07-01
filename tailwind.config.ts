@@ -44,8 +44,8 @@ const config: Config = {
         offwhite: "#F8F8F9",
       },
       fontFamily: {
-        display: ['"Titillium Web"', "system-ui", "sans-serif"],
-        editorial: ['"Cormorant Garamond"', "Georgia", "Times New Roman", "serif"],
+        display: ["var(--font-display)", '"Titillium Web"', "system-ui", "sans-serif"],
+        editorial: ["var(--font-editorial)", '"Cormorant Garamond"', "Georgia", "Times New Roman", "serif"],
         body: [
           "-apple-system",
           "BlinkMacSystemFont",
