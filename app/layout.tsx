@@ -19,7 +19,17 @@ const editorial = Cormorant_Garamond({
   display: "swap",
 });
 
+const OG_IMAGE = {
+  url: "/artifacts/Airport_SEO_Img.webp",
+  width: 6012,
+  height: 4008,
+  alt: "Techo International Airport — Experience: Treasures of Cambodia",
+};
+
 export const metadata: Metadata = {
+  // Required so relative OG image paths resolve to absolute URLs — crawlers
+  // (Facebook, LinkedIn, X, etc.) reject relative image URLs.
+  metadataBase: new URL("https://tia-experience.vercel.app"),
   title: "Experience · Techo International Airport",
   description:
     "Discover Treasures of Cambodia — an immersive heritage exhibition at Techo International Airport — then hunt for five hidden treasures across the terminal.",
@@ -35,7 +45,17 @@ export const metadata: Metadata = {
     title: "Experience · Techo International Airport",
     description:
       "Treasures of Cambodia exhibition + an interactive treasure hunt across the terminal.",
+    url: "/",
+    siteName: "Techo International Airport — Experience",
     type: "website",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Experience · Techo International Airport",
+    description:
+      "Treasures of Cambodia exhibition + an interactive treasure hunt across the terminal.",
+    images: [OG_IMAGE.url],
   },
 };
 
