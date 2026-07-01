@@ -326,7 +326,9 @@
   transition:
     background 0.25s,
     color 0.25s;
-  display: inline-block;
+  /* Full-width block so every item's right edge is the same — otherwise the
+     numbering (::after, right-anchored) hugs short labels like "HOME". */
+  display: block;
   text-decoration: none;
   padding-right: 1.4em;
 }

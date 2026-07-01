@@ -84,7 +84,7 @@ export default function ExperienceHero() {
         const W = stageEl.clientWidth;
         const H = stageEl.clientHeight;
         const mobile = window.innerWidth < 768;
-        const cardScale = mobile ? 0.5 : 0.82;
+        const cardScale = mobile ? 0.46 : 0.82;
 
         // Desktop: horizontal S (x spreads, y waves).
         const streamW = Math.min(W * 0.82, 560);
@@ -121,8 +121,15 @@ export default function ExperienceHero() {
           const gapFrac = 0.2; // skip the top 20% of the ring (logo zone)
           const f = gapFrac / 2 + (N === 1 ? 0.5 : i / (N - 1)) * (1 - gapFrac);
           const ang = topAngle + f * Math.PI * 2;
-          const rx = vw * (0.33 + rand(i * 4.3 + 2) * 0.08);
-          const ry = vh * (0.3 + rand(i * 6.7 + 8) * 0.08);
+          // On mobile the heading is (relatively) large and nearly full-width, so
+          // the ring must sit at the screen edges to leave a clear centre — the
+          // side cards bleed off-screen and only frame from the top and bottom.
+          const rx = mobile
+            ? vw * (0.48 + rand(i * 4.3 + 2) * 0.08)
+            : vw * (0.33 + rand(i * 4.3 + 2) * 0.08);
+          const ry = mobile
+            ? vh * (0.34 + rand(i * 6.7 + 8) * 0.09)
+            : vh * (0.3 + rand(i * 6.7 + 8) * 0.08);
           scatter[i] = {
             x: Math.cos(ang) * rx,
             y: Math.sin(ang) * ry,

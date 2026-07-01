@@ -1,152 +1,98 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { treasures, huntSteps, type Treasure } from "@/lib/data";
 import { Motif } from "./KhmerMotifs";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP, MotionPathPlugin);
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const STORAGE_KEY = "tia-treasures";
+// Airport photos that drift in from the gallery above — the same floating
+// archive language, carried across the seam so the two sections read as one.
+const BRIDGE = [
+  { src: "/artifacts/A7400079.webp", top: 3, left: 1, w: 150, op: 0.16, speed: 26, rot: -4 },
+  { src: "/artifacts/DJI_0293.webp", top: 7, left: 83, w: 172, op: 0.18, speed: -30, rot: 5 },
+  { src: "/artifacts/DSC00062.webp", top: 29, left: -3, w: 188, op: 0.14, speed: 40, rot: 3 },
+  { src: "/artifacts/DSC08155.webp", top: 24, left: 87, w: 158, op: 0.15, speed: -22, rot: -5 },
+  { src: "/artifacts/DJI_0299.webp", top: 54, left: 3, w: 142, op: 0.12, speed: 34, rot: 4 },
+  { src: "/artifacts/A7400221.webp", top: 60, left: 85, w: 150, op: 0.13, speed: -36, rot: -3 },
+];
 
-// Seal motif per treasure index (1-5)
-const SEALS = ["naga", "apsara", "garuda", "lotus", "temple"] as const;
-
-// Clockwise rounded-rectangle path for the border-tracing creature
-function roundedRectPath(x: number, y: number, w: number, h: number, r: number) {
-  return (
-    `M ${x + r},${y} H ${x + w - r} A ${r},${r} 0 0 1 ${x + w},${y + r} ` +
-    `V ${y + h - r} A ${r},${r} 0 0 1 ${x + w - r},${y + h} ` +
-    `H ${x + r} A ${r},${r} 0 0 1 ${x},${y + h - r} ` +
-    `V ${y + r} A ${r},${r} 0 0 1 ${x + r},${y} Z`
-  );
-}
+const LINE_1 = ["Hunt", "for", "treasure"];
+const LINE_2 = ["across", "the", "gates."];
 
 export default function TreasureHunt() {
   const root = useRef<HTMLDivElement>(null);
-  const burstLayer = useRef<HTMLDivElement>(null);
-  const sealsRef = useRef<HTMLDivElement>(null);
-  const [found, setFound] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<Treasure | null>(null);
-  const [hintShown, setHintShown] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const complete = hydrated && found.size === treasures.length;
 
-  // ── Load / persist progress ──
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setFound(new Set(JSON.parse(raw)));
-    } catch {}
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify([...found]));
-  }, [found, hydrated]);
-
-  // ── Celebration burst ──
-  const fireBurst = useCallback(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce || !burstLayer.current) return;
-    const layer = burstLayer.current;
-    const colors = ["#D6A63A", "#E2C384", "#EDE1CE", "#3C6669"];
-    for (let i = 0; i < 60; i++) {
-      const p = document.createElement("span");
-      p.className = "absolute left-1/2 top-1/2 block h-2 w-2 rounded-[1px]";
-      p.style.background = colors[i % colors.length];
-      layer.appendChild(p);
-      gsap.fromTo(
-        p,
-        { x: 0, y: 0, opacity: 1, scale: gsap.utils.random(0.6, 1.4) },
-        {
-          x: gsap.utils.random(-window.innerWidth / 2, window.innerWidth / 2),
-          y: gsap.utils.random(-window.innerHeight / 2, window.innerHeight / 3),
-          rotation: gsap.utils.random(-360, 360),
-          opacity: 0,
-          duration: gsap.utils.random(1.1, 2.2),
-          ease: "power3.out",
-          onComplete: () => p.remove(),
-        }
-      );
-    }
-  }, []);
-
-  const toggleFound = (t: Treasure) => {
-    setFound((prev) => {
-      const next = new Set(prev);
-      if (next.has(t.id)) {
-        next.delete(t.id);
-      } else {
-        next.add(t.id);
-        if (next.size === treasures.length) setTimeout(fireBurst, 150);
-      }
-      return next;
-    });
-  };
-
-  const reset = () => setFound(new Set());
-
-  const openClue = (t: Treasure) => {
-    setSelected(t);
-    setHintShown(false);
-  };
-
-  // ── Escape closes the modal ──
-  useEffect(() => {
-    if (!selected) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setSelected(null);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selected]);
-
-  // ── Entrance + modal animations ──
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.from(".th-head > *", {
-          y: 30,
-          opacity: 0,
-          duration: 0.9,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: { trigger: ".th-head", start: "top 82%" },
+
+      // Reduced motion — show the composed end state, no scroll-driven reveals.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set([".th-word", ".th-note", ".th-mapwrap"], {
+          autoAlpha: 1,
+          filter: "blur(0px)",
+          y: 0,
         });
-        gsap.from(".th-step", {
-          y: 36,
-          opacity: 0,
-          duration: 0.7,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: { trigger: ".th-steps", start: "top 82%" },
+        gsap.set(".th-bridge", { autoAlpha: 1 });
+      });
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // ── The floating archive carries over from the gallery ──
+        gsap.to(".th-bridge-img", {
+          yPercent: (i, el) => Number((el as HTMLElement).dataset.speed),
+          ease: "none",
+          scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
         });
         gsap.fromTo(
-          ".th-mapwrap",
-          { y: 40, opacity: 0 },
+          ".th-bridge",
+          { autoAlpha: 0 },
           {
-            y: 0,
-            opacity: 1,
-            duration: 1,
-            ease: "power3.out",
-            immediateRender: false,
-            scrollTrigger: { trigger: ".th-mapwrap", start: "top 85%" },
+            autoAlpha: 1,
+            ease: "none",
+            scrollTrigger: { trigger: root.current, start: "top 85%", end: "top 45%", scrub: true },
           }
         );
+
+        // ── Headline morphs in: each word resolves blur → crisp on scroll,
+        //    echoing the hero's BlurText so the language stays consistent. ──
         gsap.fromTo(
-          ".th-clue",
-          { x: 30, opacity: 0 },
+          ".th-word",
+          { autoAlpha: 0.15, filter: "blur(10px)", yPercent: 40 },
           {
-            x: 0,
-            opacity: 1,
-            duration: 0.6,
-            stagger: 0.08,
+            autoAlpha: 1,
+            filter: "blur(0px)",
+            yPercent: 0,
+            ease: "power2.out",
+            stagger: 0.12,
+            scrollTrigger: { trigger: ".th-head", start: "top 82%", end: "top 42%", scrub: 1 },
+          }
+        );
+
+        // ── Gate-rules note assembles as you arrive ──
+        gsap.fromTo(
+          ".th-note",
+          { autoAlpha: 0, y: 44 },
+          {
+            autoAlpha: 1,
+            y: 0,
             ease: "power3.out",
-            immediateRender: false,
-            scrollTrigger: { trigger: ".th-mapwrap", start: "top 80%" },
+            scrollTrigger: { trigger: ".th-note", start: "top 88%", end: "top 55%", scrub: 1 },
+          }
+        );
+
+        // ── Map rises + un-clips into place, closing the morph ──
+        gsap.fromTo(
+          ".th-mapwrap",
+          { autoAlpha: 0, y: 60, clipPath: "inset(8% 4% 8% 4% round 24px)" },
+          {
+            autoAlpha: 1,
+            y: 0,
+            clipPath: "inset(0% 0% 0% 0% round 24px)",
+            ease: "power3.out",
+            scrollTrigger: { trigger: ".th-mapwrap", start: "top 90%", end: "top 50%", scrub: 1 },
           }
         );
       });
@@ -154,120 +100,122 @@ export default function TreasureHunt() {
     { scope: root }
   );
 
-  // animate modal in + send the themed creature around the border
-  const modalRef = useRef<HTMLDivElement>(null);
-  const creatureRef = useRef<HTMLDivElement>(null);
-  useGSAP(() => {
-    if (!selected || !modalRef.current) return;
-
-    gsap.fromTo(
-      modalRef.current,
-      { y: 30, opacity: 0, scale: 0.97 },
-      { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" }
-    );
-
-    if (!creatureRef.current) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      gsap.set(creatureRef.current, { autoAlpha: 0 });
-      return;
-    }
-
-    const panel = modalRef.current;
-    const inset = 6;
-    const w = panel.offsetWidth - inset * 2;
-    const h = panel.offsetHeight - inset * 2;
-    if (w <= 0 || h <= 0) return;
-    const path = roundedRectPath(inset, inset, w, h, 22);
-
-    gsap.set(creatureRef.current, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
-    gsap.to(creatureRef.current, { autoAlpha: 1, duration: 0.5, delay: 0.35 });
-    gsap.to(creatureRef.current, {
-      duration: 8,
-      repeat: -1,
-      ease: "none",
-      motionPath: { path, autoRotate: 90 },
-    });
-  }, [selected]);
-
   return (
-    <section ref={root} id="treasure-hunt" className="relative overflow-hidden bg-white py-28 md:py-36">
-      {/* celebration layer */}
-      <div ref={burstLayer} className="pointer-events-none fixed inset-0 z-[700]" aria-hidden />
+    <section ref={root} id="treasure-hunt" className="relative overflow-hidden bg-[#fbfaf8] py-28 md:py-36">
+      {/* Floating archive drifting down from the gallery — the visual bridge */}
+      <div className="th-bridge pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block" aria-hidden>
+        {BRIDGE.map((b, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={b.src}
+            alt=""
+            loading="lazy"
+            draggable={false}
+            data-speed={b.speed}
+            className="th-bridge-img absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.4)] grayscale-[0.2]"
+            style={{ top: `${b.top}%`, left: `${b.left}%`, width: b.w, opacity: b.op, rotate: `${b.rot}deg` }}
+          />
+        ))}
+      </div>
 
-      <div className="mx-auto max-w-content px-6">
+      <div className="relative z-10 mx-auto max-w-content px-6">
         {/* Header */}
-        <div className="th-head max-w-3xl">
+        <div className="th-head mx-auto max-w-3xl text-center">
           <p className="mb-5 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
             <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">03</span>
             The Treasure Hunt
           </p>
           <h2 className="font-display text-5xl font-black leading-[0.95] tracking-tight text-teal md:text-7xl">
-            Hunt for treasure <br />
-            <span className="gold-text">across the airport.</span>
+            {LINE_1.map((w) => (
+              <span key={w} className="th-word mx-[0.12em] inline-block will-change-transform">
+                {w}
+              </span>
+            ))}
+            <br />
+            {LINE_2.map((w) => (
+              <span key={w} className="th-word gold-text mx-[0.12em] inline-block will-change-transform">
+                {w}
+              </span>
+            ))}
           </h2>
-          <p className="mt-6 max-w-xl text-pretty text-lg font-light leading-relaxed text-teal-2">
-            Five legendary treasures are hidden throughout Techo International Airport. Solve each
-            riddle, explore the terminal, and collect every seal to unlock your reward.
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-lg font-light leading-relaxed text-teal-2">
+            Cambodia&rsquo;s sacred artifacts are displayed at{" "}
+            <span className="font-medium text-teal">every gate inside Techo International Airport</span>.
+            Explore the terminal on the 3D map below and discover them as you travel.
           </p>
         </div>
 
-        {/* How it works */}
-        <div className="th-steps mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {huntSteps.map((s) => (
-            <div
-              key={s.step}
-              className="th-step rounded-2xl border border-teal/10 bg-white/60 p-6 transition-colors hover:border-gold/40"
-            >
-              <div className="font-display text-3xl font-black text-gold/40">{s.step}</div>
-              <h3 className="mt-3 font-display text-lg font-bold text-teal">{s.title}</h3>
-              <p className="mt-2 text-sm font-light leading-relaxed text-teal-2">{s.body}</p>
+        {/* How to find them — museum exhibition placard */}
+        <div className="th-note relative mx-auto mt-16 max-w-5xl overflow-hidden rounded-[28px] border border-gold/30 bg-gradient-to-b from-sand-5 to-[#f6f0e4] shadow-[0_60px_130px_-70px_rgba(9,59,63,0.55)]">
+          <div className="px-6 py-12 sm:px-10 md:px-14 md:py-16">
+            {/* Museum label heading — flanking gold rules */}
+            <div className="mx-auto mb-12 flex max-w-md items-center justify-center gap-4">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/50" />
+              <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.34em] text-brown">
+                How to find the artifacts
+              </span>
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/50" />
             </div>
-          ))}
-        </div>
 
-        {/* Progress + seals */}
-        <div className="mt-20 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-          <div>
-            <h3 className="font-display text-2xl font-bold text-teal">Your Heritage Passport</h3>
-            <p className="text-sm text-brown">
-              {complete
-                ? "Complete — every treasure found!"
-                : `${found.size} of ${treasures.length} treasures found`}
-            </p>
-          </div>
-          <div ref={sealsRef} className="flex items-center gap-3">
-            {treasures.map((t) => {
-              const got = found.has(t.id);
-              return (
-                <div
-                  key={t.id}
-                  title={got ? t.reward : "Not found yet"}
-                  className={`grid h-12 w-12 place-items-center rounded-full border-2 transition-all duration-500 ${
-                    got
-                      ? "border-gold bg-gold/15 shadow-[0_0_20px_rgba(214,166,58,0.45)]"
-                      : "border-dashed border-teal/25 opacity-50"
-                  }`}
-                >
-                  <Motif kind={SEALS[t.index - 1]} className="h-7 w-7" stroke={got ? "#D6A63A" : "#093B3F"} />
+            <div className="grid divide-y divide-gold/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {[
+                {
+                  motif: "temple",
+                  num: "I",
+                  title: "At every gate",
+                  body: (
+                    <>
+                      Artifacts are placed across{" "}
+                      <span className="font-medium text-teal">all of the gates inside the terminal</span> — wherever your journey takes you, treasures are close by.
+                    </>
+                  ),
+                },
+                {
+                  motif: "apsara",
+                  num: "II",
+                  title: "Two per gate",
+                  body: (
+                    <>
+                      Each gate holds exactly{" "}
+                      <span className="font-medium text-teal">two artifacts</span>. Find the pair at whichever gate you pass through.
+                    </>
+                  ),
+                },
+                {
+                  motif: "naga",
+                  num: "III",
+                  title: "No need to find them all",
+                  body: (
+                    <>
+                      For security, you can only reach your own gate — so finding every artifact isn&rsquo;t possible, and{" "}
+                      <span className="font-medium text-teal">you don&rsquo;t need to</span>. Enjoy the two at your gate.
+                    </>
+                  ),
+                },
+              ].map((r) => (
+                <div key={r.num} className="flex flex-col items-center px-6 py-10 text-center first:pt-0 last:pb-0 sm:py-2 sm:first:pt-2 sm:last:pb-2">
+                  {/* Motif seal */}
+                  <span className="relative grid h-16 w-16 place-items-center rounded-full border border-gold/40 bg-white/70 shadow-[inset_0_0_0_4px_rgba(214,166,58,0.08)]">
+                    <Motif kind={r.motif} className="h-8 w-8" stroke="#C9A24A" />
+                  </span>
+                  {/* Catalog numeral */}
+                  <span className="mt-5 font-display text-[11px] font-bold uppercase tracking-[0.4em] text-gold">
+                    {r.num}
+                  </span>
+                  <h3 className="mt-1.5 font-editorial text-2xl italic text-teal">{r.title}</h3>
+                  <p className="mt-3 max-w-[26ch] text-sm font-light leading-relaxed text-teal-2">
+                    {r.body}
+                  </p>
                 </div>
-              );
-            })}
-            {found.size > 0 && (
-              <button
-                onClick={reset}
-                className="ml-2 text-xs font-medium text-brown underline-offset-4 hover:underline"
-              >
-                Reset
-              </button>
-            )}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Interactive 3D map + clue list */}
-        <div className="th-mapwrap mt-8 grid gap-6 lg:grid-cols-[1.55fr_1fr]">
-          {/* Live Mappedin 3D terminal map */}
-          <div className="relative min-h-[440px] overflow-hidden rounded-3xl border border-gold/30 bg-teal lg:min-h-[580px]">
+        {/* Interactive 3D terminal map — full width */}
+        <div className="th-mapwrap mt-8">
+          <div className="relative min-h-[440px] overflow-hidden rounded-3xl border border-gold/30 bg-teal lg:min-h-[620px]">
             <iframe
               src="https://app.mappedin.com/map/68be4b135e313c000bd16ebd"
               title="Techo International Airport — interactive 3D terminal map"
@@ -278,170 +226,9 @@ export default function TreasureHunt() {
             <span className="pointer-events-none absolute left-5 top-4 z-10 rounded-full bg-sand-5/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-brown backdrop-blur-sm">
               Explore the terminal in 3D
             </span>
-
-            {/* completion overlay */}
-            {complete && (
-              <div className="absolute inset-0 z-20 grid place-items-center bg-gold/95 backdrop-blur-sm">
-                <div className="px-6 text-center">
-                  <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border-2 border-teal bg-white">
-                    <Motif kind="temple" className="h-9 w-9" stroke="#093B3F" />
-                  </div>
-                  <h3 className="font-display text-3xl font-black text-teal">Treasure Hunt Complete</h3>
-                  <p className="mx-auto mt-2 max-w-sm text-sm text-teal-2">
-                    You found all five seals of Angkor. Show this screen at the Heritage Walk gift
-                    pavilion to claim your commemorative keepsake.
-                  </p>
-                  <button
-                    onClick={reset}
-                    className="mt-5 rounded-full border border-teal/50 px-5 py-2 text-sm font-semibold text-teal hover:bg-teal hover:text-gold"
-                    data-cursor
-                  >
-                    Play again
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Treasure clue list */}
-          <div className="flex flex-col">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brown">
-              Treasure Clues
-            </p>
-            <div className="flex flex-col gap-3">
-              {treasures.map((t) => {
-                const got = found.has(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => openClue(t)}
-                    data-cursor
-                    aria-label={`Treasure ${t.index}: ${t.zone}${got ? " (found)" : ""}`}
-                    className={`th-clue group flex items-center gap-4 rounded-2xl border p-4 text-left transition-all duration-300 ${
-                      got
-                        ? "border-gold/50 bg-gold/10"
-                        : "border-teal/10 bg-white hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-md"
-                    }`}
-                  >
-                    <span
-                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 ${
-                        got ? "border-gold bg-gold/15" : "border-teal/15"
-                      }`}
-                    >
-                      {got ? (
-                        <span className="text-lg font-bold text-gold">✓</span>
-                      ) : (
-                        <Motif kind={SEALS[t.index - 1]} className="h-6 w-6" stroke="#093B3F" />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-brown">
-                        Treasure {t.index} · {t.zone}
-                      </span>
-                      <span className="block truncate font-display text-base font-bold text-teal">
-                        {t.title}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-brown transition-transform group-hover:translate-x-1">
-                      {got ? "" : "→"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-3 text-xs text-brown">
-              Tap a clue to reveal its riddle, then explore the 3D map to track it down.
-            </p>
           </div>
         </div>
       </div>
-
-      {/* Clue modal */}
-      {selected && (
-        <div
-          className="fixed inset-0 z-[750] flex items-end justify-center p-0 sm:items-center sm:p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="clue-title"
-        >
-          <div
-            className="absolute inset-0 bg-teal/60 backdrop-blur-sm"
-            onClick={() => setSelected(null)}
-          />
-          <div
-            ref={modalRef}
-            className="relative w-full max-w-lg rounded-t-3xl border border-gold/30 bg-sand-5 p-7 shadow-2xl sm:rounded-3xl md:p-9"
-          >
-            {/* Naga dragon gliding around the border */}
-            <div
-              ref={creatureRef}
-              aria-hidden
-              className="pointer-events-none absolute left-0 top-0 z-20 h-14 w-14 [filter:drop-shadow(0_0_8px_rgba(214,166,58,0.85))]"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/naga-sprite.png"
-                alt=""
-                draggable={false}
-                className="naga-alive h-full w-full select-none object-contain"
-              />
-            </div>
-
-            <button
-              onClick={() => setSelected(null)}
-              className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full text-teal/60 hover:bg-sand-4 hover:text-teal"
-              aria-label="Close clue"
-              data-cursor
-            >
-              ✕
-            </button>
-
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold">
-              Treasure {selected.index} · {selected.zone}
-            </p>
-            <h3 id="clue-title" className="mt-2 font-display text-3xl font-bold text-teal">
-              {selected.title}
-            </h3>
-
-            <div className="mt-5 rounded-2xl border-l-2 border-gold bg-white/60 p-5">
-              <p className="text-pretty font-display text-lg italic leading-relaxed text-teal-2">
-                “{selected.riddle}”
-              </p>
-            </div>
-
-            {hintShown ? (
-              <p className="mt-4 rounded-xl bg-gold/10 px-4 py-3 text-sm text-brown">
-                <span className="font-semibold text-teal">Hint · </span>
-                {selected.hint}
-              </p>
-            ) : (
-              <button
-                onClick={() => setHintShown(true)}
-                className="mt-4 text-sm font-medium text-brown underline-offset-4 hover:underline"
-              >
-                Need a hint?
-              </button>
-            )}
-
-            <div className="mt-7 flex items-center gap-3">
-              <button
-                onClick={() => {
-                  toggleFound(selected);
-                  if (!found.has(selected.id)) setSelected(null);
-                }}
-                className={`flex-1 rounded-full px-6 py-3.5 text-sm font-semibold transition-colors ${
-                  found.has(selected.id)
-                    ? "border border-teal/30 text-teal hover:bg-sand-4"
-                    : "bg-gold text-teal hover:bg-gold-2"
-                }`}
-                data-cursor
-              >
-                {found.has(selected.id) ? "Mark as not found" : `I found the ${selected.reward}`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

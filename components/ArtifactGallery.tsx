@@ -236,12 +236,19 @@ export default function ArtifactGallery() {
       id="artifacts"
       className="relative bg-[#fbfaf8] text-teal"
     >
-      {/* ── Scattered floating field (desktop only) ──
-          Clipped by its own wrapper so the section can keep position:sticky
-          (an overflow-hidden ancestor would break the sticky stage). */}
-      <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block" aria-hidden>
-        {SCATTER.map((s, i) =>
-          s.kind === "sketch" ? (
+      {/* ── Scattered floating field ──
+          Getty "Tracing Art" ambient layer: faint artworks drift past with
+          parallax. On mobile only the edge-bleeding (far-lane) items are shown
+          so the focal card keeps a clear centre; the busier mid-lane items are
+          desktop-only. Clipped by its own wrapper so the section can keep
+          position:sticky (an overflow-hidden ancestor would break it). */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+        {SCATTER.map((s, i) => {
+          // Items hugging the gutters bleed off-screen and frame the centre —
+          // keep those on mobile; hide the central-lane clutter below md.
+          const edge = s.kind === "sketch" || s.left <= 8 || s.left >= 82;
+          const vis = edge ? "" : "hidden md:block";
+          return s.kind === "sketch" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={i}
@@ -250,7 +257,7 @@ export default function ArtifactGallery() {
               loading="lazy"
               draggable={false}
               data-speed={s.speed}
-              className="scatter absolute select-none"
+              className={`scatter absolute select-none ${vis}`}
               style={{
                 top: `${s.top}%`,
                 left: `${s.left}%`,
@@ -270,7 +277,7 @@ export default function ArtifactGallery() {
               sizes={`${s.w}px`}
               draggable={false}
               data-speed={s.speed}
-              className="scatter absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.45)] grayscale-[0.12]"
+              className={`scatter absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.45)] grayscale-[0.12] ${vis}`}
               style={{
                 top: `${s.top}%`,
                 left: `${s.left}%`,
@@ -286,7 +293,7 @@ export default function ArtifactGallery() {
               data-cursor
               onClick={() => setLightbox(artifacts[s.ref])}
               aria-label={`View ${artifacts[s.ref].name}`}
-              className="scatter group pointer-events-auto absolute overflow-hidden rounded-sm shadow-[0_18px_50px_-30px_rgba(9,59,63,0.5)] transition-[opacity,transform] duration-500 hover:!opacity-100 hover:scale-[1.04]"
+              className={`scatter group pointer-events-auto absolute overflow-hidden rounded-sm shadow-[0_18px_50px_-30px_rgba(9,59,63,0.5)] transition-[opacity,transform] duration-500 hover:!opacity-100 hover:scale-[1.04] ${vis}`}
               style={{
                 top: `${s.top}%`,
                 left: `${s.left}%`,
@@ -301,21 +308,22 @@ export default function ArtifactGallery() {
                 imgClassName="aspect-[3/4] w-full object-cover grayscale-[0.15] transition-[filter] duration-500 group-hover:grayscale-0"
               />
             </button>
-          )
-        )}
+          );
+        })}
       </div>
 
       {/* The collection intro now lives in the hero (it resolves into the
           cleared centre as the hero images ring out), so the gallery opens
           straight into the artifact-by-artifact sticky composition. */}
 
-      {/* ── Gallery: one sticky composition (image + text) that cross-fades.
+      {/* ── One sticky composition (image + text) that cross-fades as you
+          scroll — the Getty "Tracing Art" focal stage, on every breakpoint.
           Empty spacer sections below provide the scroll distance and drive
           which artifact is active. ── */}
       <div className="relative">
         {/* Sticky stage — image and its description stay together, centred */}
-        <div className="pointer-events-none sticky top-0 z-10 flex h-screen flex-col items-center justify-center px-6">
-          <div className="relative aspect-[4/5] w-[min(50vw,12.5rem)]">
+        <div className="pointer-events-none sticky top-0 z-10 flex h-[100svh] flex-col items-center justify-center px-6">
+          <div className="relative aspect-[4/5] w-[min(66vw,17rem)] md:w-[min(50vw,12.5rem)]">
             {artifacts.map((a, i) => (
               <button
                 key={a.id}
@@ -324,10 +332,13 @@ export default function ArtifactGallery() {
                 onClick={() => setLightbox(a)}
                 aria-label={`View ${a.name}`}
                 tabIndex={active === i ? 0 : -1}
-                className="group pointer-events-auto absolute inset-0 overflow-hidden rounded-sm shadow-[0_40px_90px_-50px_rgba(9,59,63,0.65)] transition-[opacity,transform] duration-700 ease-out"
+                className="group absolute inset-0 overflow-hidden rounded-sm shadow-[0_40px_90px_-50px_rgba(9,59,63,0.65)] transition-[opacity,transform] duration-700 ease-out"
                 style={{
                   opacity: active === i ? 1 : 0,
                   transform: active === i ? "scale(1)" : "scale(0.94)",
+                  // Only the visible card is interactive — otherwise the last
+                  // button in the stack would swallow every click.
+                  pointerEvents: active === i ? "auto" : "none",
                 }}
               >
                 <ArtImg
@@ -343,7 +354,7 @@ export default function ArtifactGallery() {
           {/* Caption + description, cross-fading per artifact, locked under the image */}
           <div
             key={active}
-            className="mt-7 max-w-xl text-center"
+            className="mt-6 max-w-xl text-center md:mt-7"
             style={{ animation: "fadeUp 0.6s var(--ease-tia)" }}
           >
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-brown">
@@ -353,16 +364,30 @@ export default function ArtifactGallery() {
             <p className="mt-1 text-xs text-teal-2/70">
               {artifacts[active].origin} · {artifacts[active].material}
             </p>
-            <p className="mt-5 text-pretty font-editorial text-lg font-medium leading-snug text-teal md:text-xl">
+            <p className="mt-4 text-pretty font-editorial text-base font-medium leading-snug text-teal md:mt-5 md:text-xl">
               {artifacts[active].blurb}
             </p>
+          </div>
+
+          {/* Mobile timeline scrubber — Getty-style, pinned to the bottom of the
+              stage so it only shows while the gallery is in view. */}
+          <div className="absolute inset-x-6 bottom-6 flex items-center gap-3 md:hidden">
+            <span className="whitespace-nowrap font-editorial text-xs italic text-teal-2">
+              {artifacts[active].index} / {String(artifacts.length).padStart(2, "0")}
+            </span>
+            <span className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-teal/15">
+              <span
+                className="absolute inset-y-0 left-0 rounded-full bg-gold transition-all duration-500 ease-out"
+                style={{ width: `${((active + 1) / artifacts.length) * 100}%` }}
+              />
+            </span>
           </div>
         </div>
 
         {/* Invisible spacers — one screen per artifact — drive the active state */}
-        <div className="-mt-[100vh]" aria-hidden>
+        <div className="-mt-[100svh]" aria-hidden>
           {artifacts.map((a, i) => (
-            <div key={a.id} data-idx={i} className="chapter h-screen" />
+            <div key={a.id} data-idx={i} className="chapter h-[100svh]" />
           ))}
         </div>
       </div>
