@@ -23,6 +23,16 @@ const BRIDGE = [
 const LINE_1 = ["Hunt", "for", "treasure"];
 const LINE_2 = ["across", "the", "gates."];
 
+// Mappedin embed. `?floor=<floorId>` opens the map on a specific level.
+// The artifacts live at the gates on Level 1, so open there by default.
+// floorId is map-specific — to get it: open the map URL below, click
+// "Level 1", then copy the `floor=` value from the browser address bar.
+const MAP_ID = "68be4b135e313c000bd16ebd";
+const LEVEL_1_FLOOR_ID = "m_4953bc7654224e65"; // Level 1 — the gates where the artifacts are
+const MAP_SRC = `https://app.mappedin.com/map/${MAP_ID}${
+  LEVEL_1_FLOOR_ID ? `?floor=${LEVEL_1_FLOOR_ID}` : ""
+}`;
+
 export default function TreasureHunt() {
   const root = useRef<HTMLDivElement>(null);
 
@@ -220,7 +230,7 @@ export default function TreasureHunt() {
         <div className="th-mapwrap mt-8">
           <div className="relative min-h-[440px] overflow-hidden rounded-3xl border border-gold/30 bg-teal lg:min-h-[620px]">
             <iframe
-              src="https://app.mappedin.com/map/68be4b135e313c000bd16ebd"
+              src={MAP_SRC}
               title="Techo International Airport — interactive 3D terminal map"
               loading="lazy"
               allow="fullscreen; accelerometer; gyroscope; magnetometer"
