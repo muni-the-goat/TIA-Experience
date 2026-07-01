@@ -17,7 +17,11 @@
 
   body {
     @apply bg-white text-teal font-body antialiased;
-    overflow-x: hidden;
+    /* No overflow-x:hidden here — it makes body a scroll container
+       (overflow-y computes to auto), which breaks position:sticky for the
+       gallery on iOS Safari. Horizontal bleed is contained per-section and
+       by overflow-x:clip on <main> (clip is not a scroll container, so it's
+       sticky-safe). */
   }
 
   ::selection {

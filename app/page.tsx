@@ -16,7 +16,7 @@ export default function Home() {
       <ScrollProgress />
       <MotionLayer />
       <Navbar />
-      <main>
+      <main className="overflow-x-clip">
         <ExperienceHero />
         <ArtifactGallery />
         <TreasureHunt />
