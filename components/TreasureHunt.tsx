@@ -157,7 +157,13 @@ export default function TreasureHunt() {
   );
 
   return (
-    <section ref={root} id="treasure-hunt" className="relative overflow-x-clip bg-[#fbfaf8] py-28 md:py-36">
+    // No overflow clipping on the section: a clipping ancestor demotes the
+    // tracing-scroll stage's position:sticky to main-thread repositioning on
+    // iOS, which lags a frame behind momentum scroll and makes the whole
+    // pinned stage shake (same bug as the old overflow-x-hidden body). The
+    // edge-bleeding bridge layer clips itself with its own overflow-hidden
+    // wrapper instead — mirroring how the gallery section handles it.
+    <section ref={root} id="treasure-hunt" className="relative bg-[#fbfaf8] py-28 md:py-36">
       {/* Floating archive drifting down from the gallery — the visual bridge */}
       <div className="th-bridge pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block" aria-hidden>
         {BRIDGE.map((b, i) => (
