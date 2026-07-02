@@ -57,13 +57,21 @@ export default function TracingScroll({
       // One master timeline scrubbed over the whole pinned scroll. A padding
       // zero-tween at t=1 fixes the timeline's duration at exactly 1, so every
       // position/duration below reads directly as a scroll-progress fraction.
+      //
+      // scrub is numeric, not `true`: with `true` the timeline snaps to the
+      // exact scroll position at each scroll event, and iOS delivers those
+      // positions unevenly relative to the render loop during touch/momentum
+      // scroll — a full-screen image scaling 1:1 with scroll visibly judders
+      // (each frame is "correct", the *timing* is what steps). A numeric scrub
+      // makes GSAP glide the timeline toward the target on its own ticker,
+      // decoupling animation smoothness from scroll-event timing.
       const tl = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
           trigger: root.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: true,
+          scrub: 0.6,
         },
       });
       tl.set({ pad: 0 }, { pad: 1 }, 1);
