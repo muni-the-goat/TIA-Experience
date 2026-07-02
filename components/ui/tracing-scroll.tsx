@@ -116,43 +116,48 @@ function ImageLayer({
   const slotStart = index * slot;
   const first = index === 0;
 
-  // The first layer starts as a centred rounded card on the cream stage and
-  // expands to full-bleed over the opening stretch of the pinned scroll — so
-  // it only animates once the stage is actually on screen, never before.
-  // Later layers grow in as a bottom-right thumbnail, hold, then expand.
-  // Visibility is driven entirely by clip-path (no opacity cross-fade), so an
-  // expanded layer always fully covers the one beneath it — layers can never
-  // show through each other. The grow phase starts from a zero-area inset so a
-  // later layer is invisible before its turn.
+  // The reveal is driven entirely by transforms (scale + translate + opacity)
+  // — never a paint-triggering property like clip-path. The GPU composites a
+  // once-rasterised layer each frame with zero repaint, which is what keeps the
+  // scroll smooth on mobile. The first layer scales up from a centred card;
+  // later layers fade in as a bottom-right thumbnail, hold, then scale up to
+  // full-bleed. Each expanded layer fully covers the one beneath it, so layers
+  // never show through each other.
   const growStart = slotStart - slot * 0.55;
   const growEnd = slotStart - slot * 0.38;
   const expandStart = slotStart - 0.02;
   const expandEnd = slotStart + slot * 0.4;
 
   const range = first ? [0, 0.16] : seq([growStart, growEnd, expandStart, expandEnd]);
-  const insetT = useTransform(progress, range, first ? [30, 0] : [92, 70, 70, 0]);
-  const insetR = useTransform(progress, range, first ? [33, 0] : [4, 4, 4, 0]);
-  const insetB = useTransform(progress, range, first ? [30, 0] : [8, 8, 8, 0]);
-  const insetL = useTransform(progress, range, first ? [33, 0] : [96, 72, 72, 0]);
-  const radius = useTransform(progress, range, first ? [24, 0] : [12, 12, 12, 0]);
-  const clipPath = useMotionTemplate`inset(${insetT}% ${insetR}% ${insetB}% ${insetL}% round ${radius}px)`;
+  // scale: card/thumbnail size → 1 (full-bleed). Never above 1, so the layer is
+  // always rasterised at (or above) its displayed size — full-bleed stays crisp.
+  const scale = useTransform(progress, range, first ? [0.4, 1] : [0.32, 0.32, 0.32, 1]);
+  // translate (% of the viewport-sized layer): first layer stays centred; later
+  // layers sit bottom-right as a thumbnail, then slide to centre as they grow.
+  const xPct = useTransform(progress, range, first ? [0, 0] : [30, 30, 30, 0]);
+  const yPct = useTransform(progress, range, first ? [0, 0] : [27, 27, 27, 0]);
+  const x = useMotionTemplate`${xPct}%`;
+  const y = useMotionTemplate`${yPct}%`;
+  const radius = useTransform(progress, range, first ? [26, 0] : [40, 40, 40, 0]);
+  // Later layers fade their thumbnail in; the first layer is always opaque.
+  const fade = useTransform(progress, range, [0, 1, 1, 1]);
+  const opacity = first ? 1 : fade;
 
-  // Render the photo through next/image (fill + object-cover) rather than a
-  // full-resolution CSS background: the source photos are ~28MP, and clip-path
-  // repaints the whole layer every scroll frame. Serving a viewport-sized,
-  // downscaled bitmap makes that repaint cheap enough to stay smooth on mobile.
+  // Render through next/image (fill + object-cover). With a transform-only
+  // reveal there is no per-frame repaint, so source resolution no longer costs
+  // scroll performance — we can keep quality high for a crisp full-bleed image.
   return (
     <motion.div
       aria-hidden
-      className="absolute inset-0"
-      style={{ clipPath, willChange: "clip-path", transform: "translateZ(0)" }}
+      className="absolute inset-0 overflow-hidden"
+      style={{ scale, x, y, opacity, borderRadius: radius, willChange: "transform" }}
     >
       <Image
         src={image}
         alt=""
         fill
         sizes="100vw"
-        quality={70}
+        quality={85}
         priority={first}
         className="object-cover object-center"
         draggable={false}
