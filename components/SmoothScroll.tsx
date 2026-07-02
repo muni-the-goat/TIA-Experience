@@ -31,7 +31,26 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
+    // Route in-page anchor clicks (logo, menu, CTA buttons) through Lenis.
+    // Native hash jumps fight Lenis's own scroll position — that desync is
+    // what made the logo need two clicks to return to the top.
+    const onAnchorClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+      const anchor = (e.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href^="#"]');
+      const hash = anchor?.getAttribute("href");
+      if (!hash || hash === "#") return;
+      const el = document.querySelector(hash);
+      if (!el) return;
+      e.preventDefault();
+      lenis.scrollTo(el as HTMLElement);
+      history.pushState(null, "", hash);
+    };
+    document.addEventListener("click", onAnchorClick);
+
     return () => {
+      document.removeEventListener("click", onAnchorClick);
       gsap.ticker.remove(raf);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;

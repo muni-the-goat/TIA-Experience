@@ -51,37 +51,50 @@ function ArtImg({
    floating archive. Deterministic positions (SSR-safe). `top` is a %
    of the whole section height; `speed` is parallax travel in yPercent.
    ────────────────────────────────────────────────────────────── */
-type Sketch = {
+// Horizontal position is anchored to the *nearest* screen edge: left-lane items
+// carry `left`, right-lane items carry `right` (so their width extends inward and
+// never bleeds off-screen). `mob` marks the gutter-hugging items kept on mobile.
+type Pos = { left?: number; right?: number; mob: boolean };
+type Sketch = Pos & {
   kind: "sketch";
   src: string;
   top: number;
-  left: number;
   w: number;
   op: number;
   speed: number;
   rot?: number;
 };
-type Float = {
+type Float = Pos & {
   kind: "art";
   ref: number;
   top: number;
-  left: number;
   w: number;
   rot: number;
   op: number;
   speed: number;
 };
-type Photo = {
+type Photo = Pos & {
   kind: "photo";
   src: string;
   top: number;
-  left: number;
   w: number;
   op: number;
   speed: number;
   rot?: number;
 };
-type Scatter = Sketch | Float | Photo;
+// Transparent bas-relief panels (Khmer carvings, cut out on a clear
+// background). Rendered edge-free like the sketches — no box, shadow or crop —
+// so the carved figures float in the field rather than sitting in rectangles.
+type Relief = Pos & {
+  kind: "relief";
+  src: string;
+  top: number;
+  w: number;
+  op: number;
+  speed: number;
+  rot?: number;
+};
+type Scatter = Sketch | Float | Photo | Relief;
 
 // Airport concept sketches (gold & pencil line-art on transparent bg).
 const SK = {
@@ -106,8 +119,17 @@ const PH = {
   sunset: "/artifacts/TIA_Sunset_V2.webp",
 };
 
+// Cut-out Khmer bas-relief panels (transparent background).
+const RELIEF = {
+  apsaraPray: "/artifacts/A7400184.webp",
+  apsaraGate: "/artifacts/A7400203.webp",
+  apsaraCourt: "/artifacts/A7400213.webp",
+  apsaraTemple: "/artifacts/A7400221b.webp",
+};
+
 const PHOTO_SRCS = Object.values(PH);
 const SKETCH_SRCS = Object.values(SK);
+const RELIEF_SRCS = Object.values(RELIEF);
 
 // Stable pseudo-random (identical on server & client → no hydration mismatch).
 const rand = (seed: number) => {
@@ -125,7 +147,14 @@ const rand = (seed: number) => {
  * field busy yet non-overlapping. `top` is a % of the whole (very tall)
  * section; positions are deterministic so SSR and client markup match.
  */
-const LANES = [-4, 92, 13, 79]; // far-left, far-right, mid-left, mid-right
+// Each lane hugs one screen edge, measured as a % distance *from that edge*, so
+// right-lane items anchor via `right` and extend inward — never bleeding off.
+const LANES = [
+  { edge: "l" as const, base: 1, far: true }, // far-left  (flush to gutter)
+  { edge: "r" as const, base: 1, far: true }, // far-right (flush to gutter)
+  { edge: "l" as const, base: 13, far: false }, // mid-left
+  { edge: "r" as const, base: 15, far: false }, // mid-right
+];
 
 function buildScatter(): Scatter[] {
   const N = 64;
@@ -138,13 +167,15 @@ function buildScatter(): Scatter[] {
     const d = rand(i * 27.61 + 5.5);
     const roll = rand(i * 5.77 + 2.3);
 
-    const lane = LANES[i % LANES.length];
-    const isFar = lane < 0 || lane > 90;
+    const laneDef = LANES[i % LANES.length];
+    const isFar = laneDef.far;
 
     // Monotonic vertical march + tiny jitter so rows never band up.
     const top = Math.max(1, Math.min(99, ((i + 0.5) / N) * 100 + (a - 0.5) * (90 / N)));
-    const left = lane + (b - 0.5) * 4; // ±2 horizontal jitter
-    const rot = (c - 0.5) * 12;
+    const off = Math.max(0, laneDef.base + (b - 0.5) * 4); // ±2 jitter, clamped ≥0
+    const pos = laneDef.edge === "l" ? { left: off } : { right: off };
+    const mob = isFar; // gutter-hugging items are the ones kept on mobile
+    const rot = 0; // keep scattered images upright (no tilt)
     const speed = (d - 0.5) * 78; // parallax travel
 
     if (i % 8 === 3) {
@@ -153,23 +184,39 @@ function buildScatter(): Scatter[] {
         kind: "art",
         ref: Math.floor(roll * artifacts.length),
         top,
-        left: Math.max(0, Math.min(88, left)),
+        ...pos,
+        mob,
         w: 100 + Math.round(a * 34),
         rot,
         op: 0.42 + c * 0.14,
         speed,
       });
-    } else if (roll < 0.36 && isFar) {
-      // Faint airport line-sketch — only in the far lanes (free to bleed off-edge).
+    } else if (roll < 0.3 && isFar) {
+      // Faint airport line-sketch — only in the far lanes.
       out.push({
         kind: "sketch",
         src: SKETCH_SRCS[Math.floor(b * SKETCH_SRCS.length)],
         top,
-        left,
+        ...pos,
+        mob,
         w: 200 + Math.round(c * 200),
         op: 0.1 + a * 0.12,
         speed,
         rot: rot * 0.5,
+      });
+    } else if (i % 5 === 1) {
+      // Cut-out bas-relief carving. The transparent canvas is landscape with
+      // the figure centred, so it needs extra width for the carving to read.
+      out.push({
+        kind: "relief",
+        src: RELIEF_SRCS[Math.floor(c * RELIEF_SRCS.length)],
+        top,
+        ...pos,
+        mob,
+        w: 240 + Math.round(b * 150),
+        op: 0.5 + a * 0.22,
+        speed,
+        rot,
       });
     } else {
       // Supporting airport photo.
@@ -177,7 +224,8 @@ function buildScatter(): Scatter[] {
         kind: "photo",
         src: PHOTO_SRCS[Math.floor(d * PHOTO_SRCS.length)],
         top,
-        left,
+        ...pos,
+        mob,
         w: 150 + Math.round(b * 60),
         op: (isFar ? 0.32 : 0.28) + c * 0.14,
         speed,
@@ -216,6 +264,22 @@ export default function ArtifactGallery() {
         });
       }
 
+      // The progress indicator is position:fixed, so it stays on screen for
+      // the whole page — only show it while the gallery itself is in view,
+      // otherwise it overlaps the treasure-hunt section below.
+      gsap.set(".tia-progress", { autoAlpha: 0 });
+      ScrollTrigger.create({
+        trigger: root.current,
+        start: "top 60%",
+        end: "bottom 60%",
+        onToggle: (self) =>
+          gsap.to(".tia-progress", {
+            autoAlpha: self.isActive ? 1 : 0,
+            duration: 0.3,
+            overwrite: "auto",
+          }),
+      });
+
       // Active chapter tracking — drives the sticky stage + the rail.
       gsap.utils.toArray<HTMLElement>(".chapter").forEach((ch) => {
         const idx = Number(ch.dataset.idx);
@@ -244,11 +308,14 @@ export default function ArtifactGallery() {
           position:sticky (an overflow-hidden ancestor would break it). */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
         {SCATTER.map((s, i) => {
-          // Items hugging the gutters bleed off-screen and frame the centre —
-          // keep those on mobile; hide the central-lane clutter below md.
-          const edge = s.kind === "sketch" || s.left <= 8 || s.left >= 82;
-          const vis = edge ? "" : "hidden md:block";
-          return s.kind === "sketch" ? (
+          // Gutter-hugging items frame the centre — keep those on mobile; hide
+          // the busier mid-lane clutter below md.
+          const vis = s.mob ? "" : "hidden md:block";
+          // Anchor to whichever edge the item was assigned (left or right).
+          const hx = s.left != null ? { left: `${s.left}%` } : { right: `${s.right}%` };
+          return s.kind === "sketch" || s.kind === "relief" ? (
+            // Transparent cut-outs (line sketches + bas-relief panels) — no
+            // box, shadow or crop, so only the artwork itself shows.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={i}
@@ -260,7 +327,7 @@ export default function ArtifactGallery() {
               className={`scatter absolute select-none ${vis}`}
               style={{
                 top: `${s.top}%`,
-                left: `${s.left}%`,
+                ...hx,
                 width: s.w,
                 opacity: s.op,
                 rotate: `${s.rot ?? 0}deg`,
@@ -280,7 +347,7 @@ export default function ArtifactGallery() {
               className={`scatter absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.45)] grayscale-[0.12] ${vis}`}
               style={{
                 top: `${s.top}%`,
-                left: `${s.left}%`,
+                ...hx,
                 opacity: s.op,
                 rotate: `${s.rot ?? 0}deg`,
               }}
@@ -296,7 +363,7 @@ export default function ArtifactGallery() {
               className={`scatter group pointer-events-auto absolute overflow-hidden rounded-sm shadow-[0_18px_50px_-30px_rgba(9,59,63,0.5)] transition-[opacity,transform] duration-500 hover:!opacity-100 hover:scale-[1.04] ${vis}`}
               style={{
                 top: `${s.top}%`,
-                left: `${s.left}%`,
+                ...hx,
                 width: s.w,
                 rotate: `${s.rot}deg`,
                 opacity: s.op,
@@ -344,7 +411,7 @@ export default function ArtifactGallery() {
                 <ArtImg
                   a={a}
                   className="h-full w-full"
-                  imgClassName="h-full w-full object-cover object-[center_25%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                  imgClassName="h-full w-full object-cover object-[center_25%] transition-transform [transition-duration:1200ms] ease-out group-hover:scale-[1.04]"
                 />
                 <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-teal/15 to-transparent" />
               </button>
@@ -357,9 +424,6 @@ export default function ArtifactGallery() {
             className="mt-6 max-w-xl text-center md:mt-7"
             style={{ animation: "fadeUp 0.6s var(--ease-tia)" }}
           >
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-brown">
-              {artifacts[active].era}
-            </p>
             <p className="font-editorial text-2xl italic text-teal">{artifacts[active].name}</p>
             <p className="mt-1 text-xs text-teal-2/70">
               {artifacts[active].origin} · {artifacts[active].material}
@@ -413,7 +477,7 @@ export default function ArtifactGallery() {
       {/* ── Progress indicator (right) — one grouped scroll thumb, Getty-style ── */}
       <div
         aria-hidden
-        className="pointer-events-none fixed right-6 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-3 lg:flex"
+        className="tia-progress pointer-events-none fixed right-6 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-3 lg:flex"
       >
         <span className="font-editorial text-sm italic text-teal-2">
           {artifacts[active].name}
@@ -445,9 +509,6 @@ export default function ArtifactGallery() {
 
               {/* Details */}
               <div className="flex flex-col justify-center p-6 md:p-9">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-brown">
-                  {lightbox.era}
-                </p>
                 <DialogTitle className="font-editorial text-3xl font-medium leading-tight text-teal md:text-4xl">
                   {lightbox.name}
                 </DialogTitle>
