@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionTemplate,
@@ -136,12 +137,27 @@ function ImageLayer({
   const radius = useTransform(progress, range, first ? [24, 0] : [12, 12, 12, 0]);
   const clipPath = useMotionTemplate`inset(${insetT}% ${insetR}% ${insetB}% ${insetL}% round ${radius}px)`;
 
+  // Render the photo through next/image (fill + object-cover) rather than a
+  // full-resolution CSS background: the source photos are ~28MP, and clip-path
+  // repaints the whole layer every scroll frame. Serving a viewport-sized,
+  // downscaled bitmap makes that repaint cheap enough to stay smooth on mobile.
   return (
     <motion.div
       aria-hidden
-      className="absolute inset-0 bg-cover bg-center"
-      style={{ backgroundImage: `url(${image})`, clipPath, willChange: "clip-path" }}
-    />
+      className="absolute inset-0"
+      style={{ clipPath, willChange: "clip-path", transform: "translateZ(0)" }}
+    >
+      <Image
+        src={image}
+        alt=""
+        fill
+        sizes="100vw"
+        quality={70}
+        priority={first}
+        className="object-cover object-center"
+        draggable={false}
+      />
+    </motion.div>
   );
 }
 

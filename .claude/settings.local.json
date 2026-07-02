@@ -15,7 +15,8 @@
       "Bash(npx tsc *)",
       "WebFetch(domain:www.getty.edu)",
       "Bash(npx --yes shadcn@latest add @reactbits/BlurText-TS-TW --yes --overwrite)",
-      "mcp__shadcn__search_items_in_registries"
+      "mcp__shadcn__search_items_in_registries",
+      "PowerShell(npm run build 2>&1)"
     ],
     "additionalDirectories": [
       "c:\\Users\\user\\.claude\\projects\\c--Users-user-OneDrive-Desktop-Web3-Project-TIA\\memory"
