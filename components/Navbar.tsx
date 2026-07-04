@@ -10,9 +10,9 @@ const menuItems: StaggeredMenuItem[] = [
 ];
 
 const socialItems: StaggeredMenuSocialItem[] = [
-  { label: "Facebook", link: "https://www.facebook.com/" },
-  { label: "Instagram", link: "https://www.instagram.com/" },
-  { label: "Website", link: "https://www.cambodia-airports.aero/" },
+  { label: "Facebook", link: "https://www.facebook.com/share/1BPEVHkBdq/?mibextid=wwXIfr" },
+  { label: "Instagram", link: "https://www.instagram.com/techo_international_airport/" },
+  { label: "Website", link: "https://www.techoairport.com.kh/" },
 ];
 
 export default function Navbar() {

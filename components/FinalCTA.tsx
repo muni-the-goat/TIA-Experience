@@ -89,13 +89,6 @@ export default function FinalCTA() {
             </a>
           </Button>
         </div>
-
-        {/* Closing microline */}
-        <p className="cta-el mt-9 flex items-center justify-center gap-3 text-[11px] uppercase tracking-[0.3em] text-teal-3">
-          <span className="h-1 w-1 rounded-full bg-gold/70" />
-          Free · No ticket · No queue
-          <span className="h-1 w-1 rounded-full bg-gold/70" />
-        </p>
       </div>
     </section>
   );

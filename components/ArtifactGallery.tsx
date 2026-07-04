@@ -6,44 +6,10 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { artifacts, type Artifact } from "@/lib/data";
-import { Motif } from "./KhmerMotifs";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ArtImg } from "./ArtImg";
+import { ArtifactLightbox } from "./ArtifactLightbox";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-/* ──────────────────────────────────────────────────────────────
-   Image with graceful fall-back to the inline SVG motif.
-   ────────────────────────────────────────────────────────────── */
-function ArtImg({
-  a,
-  className,
-  imgClassName,
-}: {
-  a: Artifact;
-  className?: string;
-  imgClassName?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  const showImage = a.image && !failed;
-
-  if (showImage) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={a.image}
-        alt={`${a.name} — ${a.era}, ${a.origin}`}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className={imgClassName}
-      />
-    );
-  }
-  return (
-    <div className={`grid place-items-center bg-sand-4 ${className ?? ""}`}>
-      <Motif kind={a.motif} className="h-1/2 w-1/2" stroke="#C9A24A" />
-    </div>
-  );
-}
 
 /* ──────────────────────────────────────────────────────────────
    Scattered background field — faint airport concept sketches plus
@@ -54,7 +20,9 @@ function ArtImg({
 // Horizontal position is anchored to the *nearest* screen edge: left-lane items
 // carry `left`, right-lane items carry `right` (so their width extends inward and
 // never bleeds off-screen). `mob` marks the gutter-hugging items kept on mobile.
-type Pos = { left?: number; right?: number; mob: boolean };
+// `depth` (0 = far, 1 = near) is the single value every depth cue — size,
+// opacity, scroll parallax, mouse drift — derives from, so the cues agree.
+type Pos = { left?: number; right?: number; mob: boolean; depth: number };
 type Sketch = Pos & {
   kind: "sketch";
   src: string;
@@ -156,9 +124,42 @@ const LANES = [
   { edge: "r" as const, base: 15, far: false }, // mid-right
 ];
 
+const lerp = (t: number, lo: number, hi: number) => lo + t * (hi - lo);
+
+// Scroll parallax from depth (Getty's perspective camera, faked in 1D):
+// far planes lag the page (positive yPercent — pinned to the backdrop),
+// near planes race ahead of it. One consistent direction per depth, with a
+// small jitter so same-plane items don't march in lockstep.
+const speedFor = (depth: number, jitter: number) =>
+  28 - depth * 100 + (jitter - 0.5) * 12;
+
+// Which kind an index becomes (order matters — art wins over sketch over
+// relief). Split out so the relief pre-pass below and the build loop agree.
+type Meta = { i: number; roll: number; isFar: boolean };
+const kindOf = ({ i, roll, isFar }: Meta) =>
+  i % 8 === 3 ? "art" : roll < 0.3 && isFar ? "sketch" : i % 5 === 1 && isFar ? "relief" : "photo";
+
 function buildScatter(): Scatter[] {
   const N = 64;
   const out: Scatter[] = [];
+
+  // Pre-pass: where the reliefs land. Each carving is ~10× the area of a
+  // photo, so anything sharing its column would show through the overlap as
+  // mush — pass 2 keeps a clearance zone (in section-% terms) around each.
+  const reliefSpots: { edge: "l" | "r"; top: number }[] = [];
+  for (let i = 0; i < N; i++) {
+    const a = rand(i * 12.9898 + 4.1);
+    const roll = rand(i * 5.77 + 2.3);
+    const laneDef = LANES[i % LANES.length];
+    if (kindOf({ i, roll, isFar: laneDef.far }) === "relief") {
+      const top = Math.max(1, Math.min(99, ((i + 0.5) / N) * 100 + (a - 0.5) * (90 / N)));
+      reliefSpots.push({ edge: laneDef.edge, top });
+    }
+  }
+  // Asymmetric window: the image extends *downward* from its top anchor, and
+  // fast near-plane parallax pulls it a little upward past neighbours.
+  const CLEAR_UP = 4;
+  const CLEAR_DOWN = 8;
 
   for (let i = 0; i < N; i++) {
     const a = rand(i * 12.9898 + 4.1);
@@ -169,6 +170,7 @@ function buildScatter(): Scatter[] {
 
     const laneDef = LANES[i % LANES.length];
     const isFar = laneDef.far;
+    const kind = kindOf({ i, roll, isFar });
 
     // Monotonic vertical march + tiny jitter so rows never band up.
     const top = Math.max(1, Math.min(99, ((i + 0.5) / N) * 100 + (a - 0.5) * (90 / N)));
@@ -176,59 +178,89 @@ function buildScatter(): Scatter[] {
     const pos = laneDef.edge === "l" ? { left: off } : { right: off };
     const mob = isFar; // gutter-hugging items are the ones kept on mobile
     const rot = 0; // keep scattered images upright (no tilt)
-    const speed = (d - 0.5) * 78; // parallax travel
 
-    if (i % 8 === 3) {
-      // Clickable artifact thumbnail.
+    // Drop items that would sit inside a relief's clearance zone on the same
+    // side — breathing room around the carvings beats raw field density.
+    if (
+      kind !== "relief" &&
+      reliefSpots.some(
+        (r) => r.edge === laneDef.edge && top > r.top - CLEAR_UP && top < r.top + CLEAR_DOWN
+      )
+    ) {
+      continue;
+    }
+
+    // Each kind occupies one depth band; `t` is the item's position within
+    // its band and drives size + opacity together (atmospheric perspective:
+    // farther = smaller = more faded toward the #fbfaf8 paper).
+    if (kind === "art") {
+      // Clickable artifact thumbnail — mid plane, kept legible to invite the tap.
+      const t = b;
+      const depth = lerp(t, 0.4, 0.62);
       out.push({
         kind: "art",
         ref: Math.floor(roll * artifacts.length),
         top,
         ...pos,
         mob,
-        w: 100 + Math.round(a * 34),
+        depth,
+        w: Math.round(lerp(t, 96, 150)),
         rot,
-        op: 0.42 + c * 0.14,
-        speed,
+        op: lerp(t, 0.45, 0.62),
+        speed: speedFor(depth, d),
       });
-    } else if (roll < 0.3 && isFar) {
-      // Faint airport line-sketch — only in the far lanes.
+    } else if (kind === "sketch") {
+      // Airport line-sketch — the farthest plane, a near-watermark backdrop.
+      const t = a;
+      const depth = lerp(t, 0, 0.18);
       out.push({
         kind: "sketch",
         src: SKETCH_SRCS[Math.floor(b * SKETCH_SRCS.length)],
         top,
         ...pos,
         mob,
+        depth,
         w: 200 + Math.round(c * 200),
-        op: 0.1 + a * 0.12,
-        speed,
-        rot: rot * 0.5,
+        op: lerp(t, 0.06, 0.14),
+        speed: speedFor(depth, b),
+        rot,
       });
-    } else if (i % 5 === 1) {
-      // Cut-out bas-relief carving. The transparent canvas is landscape with
-      // the figure centred, so it needs extra width for the carving to read.
+    } else if (kind === "relief") {
+      // Cut-out bas-relief carving — the near plane. Largest, near-opaque and
+      // fastest travel: when something passes behind it, the carving occludes
+      // it (translucency here reads as two images mushed together, not
+      // depth). Far lanes only, so the carvings live in the gutters and
+      // bleed off-frame. The transparent canvas is landscape with the figure
+      // centred, so the extra width is what lets the carving itself read big.
+      const t = b;
+      const depth = lerp(t, 0.8, 1);
+      const nearOff = laneDef.base - 10 + (b - 0.5) * 4;
       out.push({
         kind: "relief",
         src: RELIEF_SRCS[Math.floor(c * RELIEF_SRCS.length)],
         top,
-        ...pos,
+        ...(laneDef.edge === "l" ? { left: nearOff } : { right: nearOff }),
         mob,
-        w: 240 + Math.round(b * 150),
-        op: 0.5 + a * 0.22,
-        speed,
+        depth,
+        w: Math.round(lerp(t, 520, 840)),
+        op: lerp(t, 0.85, 1),
+        speed: speedFor(depth, d),
         rot,
       });
     } else {
-      // Supporting airport photo.
+      // Supporting airport photo — mid-far plane, faded hard toward the paper.
+      const t = c;
+      const depth = lerp(t, 0.25, 0.6);
       out.push({
         kind: "photo",
         src: PHOTO_SRCS[Math.floor(d * PHOTO_SRCS.length)],
         top,
         ...pos,
         mob,
-        w: 150 + Math.round(b * 60),
-        op: (isFar ? 0.32 : 0.28) + c * 0.14,
-        speed,
+        depth,
+        w: Math.round(lerp(t, 120, 205)),
+        op: lerp(t, 0.14, 0.4),
+        speed: speedFor(depth, d),
         rot,
       });
     }
@@ -290,6 +322,30 @@ export default function ArtifactGallery() {
           onToggle: (self) => self.isActive && setActive(idx),
         });
       });
+
+      // Getty-style "camera" drift — the cursor nudges the whole field, near
+      // planes more than far ones, spring-smoothed with quickTo so the
+      // collage floats with inertia instead of tracking the mouse 1:1.
+      // Desktop pointers only; scroll parallax owns yPercent, this owns x/y,
+      // so the two compose without fighting.
+      if (!reduce && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        const layers = gsap.utils.toArray<HTMLElement>(".scatter").map((el) => ({
+          depth: Number(el.dataset.depth ?? 0),
+          toX: gsap.quickTo(el, "x", { duration: 1.2, ease: "power3" }),
+          toY: gsap.quickTo(el, "y", { duration: 1.2, ease: "power3" }),
+        }));
+        const drift = (e: PointerEvent) => {
+          const nx = e.clientX / window.innerWidth - 0.5;
+          const ny = e.clientY / window.innerHeight - 0.5;
+          for (const l of layers) {
+            // Counter-move (like a camera pan): near planes sweep further.
+            l.toX(-nx * l.depth * 44);
+            l.toY(-ny * l.depth * 28);
+          }
+        };
+        window.addEventListener("pointermove", drift, { passive: true });
+        return () => window.removeEventListener("pointermove", drift);
+      }
     },
     { scope: root }
   );
@@ -315,7 +371,9 @@ export default function ArtifactGallery() {
           const hx = s.left != null ? { left: `${s.left}%` } : { right: `${s.right}%` };
           return s.kind === "sketch" || s.kind === "relief" ? (
             // Transparent cut-outs (line sketches + bas-relief panels) — no
-            // box, shadow or crop, so only the artwork itself shows.
+            // box, shadow or crop, so only the artwork itself shows. Reliefs
+            // are the near plane: stacked above the rest and softly blurred
+            // (out-of-focus foreground) so the field reads with depth.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={i}
@@ -324,11 +382,12 @@ export default function ArtifactGallery() {
               loading="lazy"
               draggable={false}
               data-speed={s.speed}
-              className={`scatter absolute select-none ${vis}`}
+              data-depth={s.depth}
+              className={`scatter absolute select-none ${s.kind === "relief" ? "z-10" : ""} ${vis}`}
               style={{
                 top: `${s.top}%`,
                 ...hx,
-                width: s.w,
+                width: s.kind === "relief" ? `min(${s.w}px, 88vw)` : s.w,
                 opacity: s.op,
                 rotate: `${s.rot ?? 0}deg`,
               }}
@@ -344,6 +403,7 @@ export default function ArtifactGallery() {
               sizes={`${s.w}px`}
               draggable={false}
               data-speed={s.speed}
+              data-depth={s.depth}
               className={`scatter absolute select-none rounded-sm object-cover shadow-[0_18px_50px_-30px_rgba(9,59,63,0.45)] grayscale-[0.12] ${vis}`}
               style={{
                 top: `${s.top}%`,
@@ -357,10 +417,15 @@ export default function ArtifactGallery() {
               key={i}
               type="button"
               data-speed={s.speed}
+              data-depth={s.depth}
               data-cursor
               onClick={() => setLightbox(artifacts[s.ref])}
               aria-label={`View ${artifacts[s.ref].name}`}
-              className={`scatter group pointer-events-auto absolute overflow-hidden rounded-sm shadow-[0_18px_50px_-30px_rgba(9,59,63,0.5)] transition-[opacity,transform] duration-500 hover:!opacity-100 hover:scale-[1.04] ${vis}`}
+              // No CSS transition on transform here — GSAP owns this element's
+              // transform (scroll yPercent + mouse x/y) and a CSS transition
+              // would re-smooth every frame into lag. Hover scale lives on the
+              // inner image instead.
+              className={`scatter group pointer-events-auto absolute overflow-hidden rounded-sm shadow-[0_18px_50px_-30px_rgba(9,59,63,0.5)] transition-opacity duration-500 hover:!opacity-100 ${vis}`}
               style={{
                 top: `${s.top}%`,
                 ...hx,
@@ -372,7 +437,7 @@ export default function ArtifactGallery() {
               <ArtImg
                 a={artifacts[s.ref]}
                 className="aspect-[3/4] w-full"
-                imgClassName="aspect-[3/4] w-full object-cover grayscale-[0.15] transition-[filter] duration-500 group-hover:grayscale-0"
+                imgClassName="aspect-[3/4] w-full object-cover grayscale-[0.15] transition-[filter,transform] duration-500 group-hover:scale-[1.04] group-hover:grayscale-0"
               />
             </button>
           );
@@ -493,43 +558,8 @@ export default function ArtifactGallery() {
         </span>
       </div>
 
-      {/* ── Lightbox (shadcn Dialog · Radix) ── */}
-      <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
-        <DialogContent className="grid max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-4xl gap-0 overflow-y-auto rounded-2xl p-0 md:max-h-none md:grid-cols-2 md:overflow-hidden">
-          {lightbox && (
-            <>
-              {/* Image — top on mobile, fixed-height left column on desktop */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-sand-4 sm:aspect-[5/4] md:aspect-auto md:h-[30rem]">
-                <ArtImg
-                  a={lightbox}
-                  className="h-full w-full"
-                  imgClassName="h-full w-full object-cover object-[center_25%]"
-                />
-              </div>
-
-              {/* Details */}
-              <div className="flex flex-col justify-center p-6 md:p-9">
-                <DialogTitle className="font-editorial text-3xl font-medium leading-tight text-teal md:text-4xl">
-                  {lightbox.name}
-                </DialogTitle>
-                <div className="my-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-teal-2">
-                  <span>
-                    <span className="font-semibold text-brown-3">Origin · </span>
-                    {lightbox.origin}
-                  </span>
-                  <span>
-                    <span className="font-semibold text-brown-3">Material · </span>
-                    {lightbox.material}
-                  </span>
-                </div>
-                <DialogDescription className="font-editorial text-lg leading-relaxed text-teal-2 md:text-xl">
-                  {lightbox.blurb}
-                </DialogDescription>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* ── Lightbox — Radix Dialog a11y, Motion-driven "resolve into focus" ── */}
+      <ArtifactLightbox artifact={lightbox} onOpenChange={(o) => !o && setLightbox(null)} />
     </section>
   );
 }

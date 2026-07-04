@@ -3,29 +3,6 @@
 
 type MotifProps = { className?: string; stroke?: string };
 
-export function TempleSilhouette({ className, stroke = "#093B3F" }: MotifProps) {
-  return (
-    <svg viewBox="0 0 600 220" className={className} aria-hidden fill="none">
-      {/* Angkor Wat five-tower silhouette */}
-      <g fill={stroke}>
-        <path d="M300 8c6 22 10 34 22 46-8 4-8 14-8 22h-28c0-8 0-18-8-22 12-12 16-24 22-46z" />
-        <path d="M180 50c4 16 8 24 16 34-6 3-6 10-6 16h-20c0-6 0-13-6-16 8-10 12-18 16-34z" />
-        <path d="M420 50c4 16 8 24 16 34-6 3-6 10-6 16h-20c0-6 0-13-6-16 8-10 12-18 16-34z" />
-        <path d="M90 78c3 12 6 18 12 26-4 2-4 8-4 12H84c0-4 0-9-4-12 6-8 8-14 10-26z" />
-        <path d="M510 78c3 12 6 18 12 26-4 2-4 8-4 12h-14c0-4 0-9-4-12 6-8 8-14 10-26z" />
-      </g>
-      <rect x="40" y="120" width="520" height="14" rx="2" fill={stroke} />
-      <rect x="60" y="134" width="480" height="60" fill={stroke} opacity="0.9" />
-      <g fill="#F7F6F5" opacity="0.85">
-        {Array.from({ length: 13 }).map((_, i) => (
-          <rect key={i} x={74 + i * 36} y={146} width="14" height="40" rx="1" />
-        ))}
-      </g>
-      <rect x="40" y="194" width="520" height="10" rx="2" fill={stroke} />
-    </svg>
-  );
-}
-
 export function Motif({ kind, className, stroke = "#D6A63A" }: MotifProps & { kind: string }) {
   switch (kind) {
     case "naga":
@@ -102,17 +79,4 @@ export function Motif({ kind, className, stroke = "#D6A63A" }: MotifProps & { ki
         </svg>
       );
   }
-}
-
-export function KhmerBorder({ className, stroke = "#D6A63A" }: MotifProps) {
-  return (
-    <svg viewBox="0 0 1200 24" className={className} preserveAspectRatio="none" aria-hidden fill="none">
-      <g stroke={stroke} strokeWidth="1.5">
-        <path d="M0 12h1200" opacity="0.4" />
-        {Array.from({ length: 40 }).map((_, i) => (
-          <path key={i} d={`M${i * 30 + 6} 12c4-8 14-8 18 0s-14 8-18 0z`} />
-        ))}
-      </g>
-    </svg>
-  );
 }

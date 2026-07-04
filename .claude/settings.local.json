@@ -19,7 +19,12 @@
       "PowerShell(npm run build 2>&1)",
       "Bash(git add *)",
       "Bash(git commit -q -m 'Remove overflow-x-clip from treasure-hunt section to fix iOS sticky shake *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npm view *)",
+      "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\);console.log\\(v.filter\\(x=>x.startsWith\\('9.'\\)\\).slice\\(-8\\)\\)\")",
+      "Bash(npm install *)",
+      "Skill(run)",
+      "Skill(run:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\user\\.claude\\projects\\c--Users-user-OneDrive-Desktop-Web3-Project-TIA\\memory"

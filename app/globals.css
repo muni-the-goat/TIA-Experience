@@ -38,10 +38,6 @@
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
   /* Full-viewport stage height with a 100vh fallback for browsers/webviews
      that don't support svh (some mobile in-app browsers). Without the
      fallback, `height: 100svh` is ignored there and the sticky gallery's
@@ -90,53 +86,6 @@
     -webkit-text-fill-color: transparent;
     @apply animate-shimmer;
   }
-
-  .gold-line {
-    background: linear-gradient(90deg, transparent, #d6a63a, transparent);
-  }
-
-  /* Used by JS split-text reveal */
-  .reveal-word {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-  }
-  .reveal-word > span {
-    display: inline-block;
-    will-change: transform;
-  }
-
-  .text-stroke {
-    -webkit-text-stroke: 1.5px #093b3f;
-    color: transparent;
-  }
-
-  .grain {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-  }
-}
-
-/* Naga dragon "alive" idle motion — slither + breathe + gold shimmer.
-   Lives on the inner sprite so it stacks cleanly with the GSAP motion-path
-   transform on the parent. Disabled under reduced motion by the guard below. */
-.naga-alive {
-  transform-origin: center;
-  will-change: transform, filter;
-  animation:
-    naga-slither 2.1s ease-in-out infinite,
-    naga-shimmer 2.6s ease-in-out infinite;
-}
-@keyframes naga-slither {
-  0%   { transform: skewX(0deg)   scale(1, 1); }
-  20%  { transform: skewX(-3.2deg) scale(1.025, 0.975); }
-  40%  { transform: skewX(2.2deg)  scale(0.985, 1.02); }
-  60%  { transform: skewX(-2deg)  scale(1.02, 0.985); }
-  80%  { transform: skewX(3deg)   scale(0.98, 1.015); }
-  100% { transform: skewX(0deg)   scale(1, 1); }
-}
-@keyframes naga-shimmer {
-  0%, 100% { filter: brightness(1) saturate(1); }
-  50%      { filter: brightness(1.12) saturate(1.15); }
 }
 
 /* Lenis smooth-scroll recommended styles */
