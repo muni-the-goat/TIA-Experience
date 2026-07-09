@@ -253,7 +253,7 @@ export default function ExperienceHero() {
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[110vmin] w-[110vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(214,166,58,0.10)_0%,transparent_60%)]" />
 
         {/* Semantic heading (visual version is the animated words) */}
-        <h1 className="sr-only">Experience TIA — Treasures of Cambodia at Techo International Airport</h1>
+        <h1 className="sr-only">Experience TIA: Treasures of Cambodia at Techo International Airport</h1>
 
         {/* Stacked column on mobile · Experience 〰️[ S-curve ]〰️ TIA grid on desktop */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-4 pt-24 pb-10 md:grid md:grid-cols-[1fr_42vw_1fr] md:items-center md:gap-0 md:p-0">
@@ -266,10 +266,10 @@ export default function ExperienceHero() {
                 direction="top"
                 delay={55}
                 stepDuration={0.4}
-                className="!flex-nowrap justify-center font-editorial text-5xl font-medium leading-none text-teal md:justify-end md:text-6xl xl:text-7xl"
+                className="!flex-nowrap justify-center font-display text-5xl font-medium leading-none text-teal md:justify-end md:text-6xl xl:text-7xl"
               />
             ) : (
-              <span className="font-editorial text-5xl font-medium leading-none text-teal opacity-0 md:text-6xl xl:text-7xl">
+              <span className="font-display text-5xl font-medium leading-none text-teal opacity-0 md:text-6xl xl:text-7xl">
                 Experience
               </span>
             )}
@@ -314,10 +314,10 @@ export default function ExperienceHero() {
                 direction="bottom"
                 delay={110}
                 stepDuration={0.45}
-                className="!flex-nowrap justify-center font-editorial text-6xl font-semibold leading-none text-gold md:justify-start md:text-8xl"
+                className="!flex-nowrap justify-center font-display text-6xl font-medium leading-none text-gold md:justify-start md:text-8xl"
               />
             ) : (
-              <span className="font-editorial text-6xl font-semibold leading-none text-gold opacity-0 md:text-8xl">
+              <span className="font-display text-6xl font-medium leading-none text-gold opacity-0 md:text-8xl">
                 TIA
               </span>
             )}
@@ -326,19 +326,13 @@ export default function ExperienceHero() {
 
         {/* Collection intro — resolves into the cleared centre as the images ring out */}
         <div className="xh-intro pointer-events-none absolute inset-0 z-20 mx-auto flex max-w-3xl flex-col items-center justify-center px-6 text-center">
-          <p className="xh-intro-el mb-6 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">
-              02
-            </span>
-            The Collection
-          </p>
-          <h2 className="xh-intro-el font-editorial text-[2rem] font-medium leading-[1.08] text-teal sm:text-[2.6rem] md:text-[4rem]">
+          <h2 className="xh-intro-el font-display text-[1.6rem] font-medium leading-[1.1] text-teal sm:text-[2rem] md:text-[3rem]">
             A thousand years of Khmer devotion,
-            <span className="italic text-brown-3"> drifting through the halls</span> from
+            <span className="text-brown-3"> drifting through the halls</span> from
             Angkor to Techo.
           </h2>
-          <p className="xh-intro-el mt-6 max-w-xl font-editorial text-base italic text-teal-2 md:text-xl">
-            Twelve sacred treasures — carved in stone, gathered here as a single journey
+          <p className="xh-intro-el mt-6 max-w-xl font-display text-base text-teal-2 md:text-xl">
+            Twelve sacred treasures, carved in stone, gathered here as a single journey
             through the sculptural memory of Cambodia.
           </p>
         </div>

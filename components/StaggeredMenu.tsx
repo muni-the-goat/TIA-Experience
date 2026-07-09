@@ -408,7 +408,7 @@ export const StaggeredMenu = ({
         })()}
       </div>
       <header className="staggered-menu-header" aria-label="Main navigation header">
-        <a className="sm-logo" href="#top" aria-label="Techo International Airport — home">
+        <a className="sm-logo" href="#top" aria-label="Techo International Airport home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}

@@ -25,7 +25,7 @@ export function ArtImg({
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={a.image}
-        alt={`${a.name} — ${a.era}, ${a.origin}`}
+        alt={`${a.name}, ${a.era}, ${a.origin}`}
         loading="lazy"
         onError={() => setFailed(true)}
         className={imgClassName}

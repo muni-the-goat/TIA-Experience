@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Titillium_Web, Cormorant_Garamond } from "next/font/google";
+import { Titillium_Web, Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
@@ -11,11 +11,10 @@ const display = Titillium_Web({
   variable: "--font-display",
   display: "swap",
 });
-const editorial = Cormorant_Garamond({
+const body = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-editorial",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-body",
   display: "swap",
 });
 
@@ -23,7 +22,7 @@ const OG_IMAGE = {
   url: "/artifacts/Airport_SEO_Img.webp",
   width: 6012,
   height: 4008,
-  alt: "Techo International Airport — Experience: Treasures of Cambodia",
+  alt: "Techo International Airport Experience: Treasures of Cambodia",
 };
 
 export const metadata: Metadata = {
@@ -32,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://tia-experience.vercel.app"),
   title: "Experience · Techo International Airport",
   description:
-    "Discover Treasures of Cambodia — an immersive heritage exhibition at Techo International Airport — then hunt for five hidden treasures across the terminal.",
+    "Discover Treasures of Cambodia, an immersive heritage exhibition at Techo International Airport, then hunt for five hidden treasures across the terminal.",
   keywords: [
     "Techo International Airport",
     "Cambodia",
@@ -46,7 +45,7 @@ export const metadata: Metadata = {
     description:
       "Treasures of Cambodia exhibition + an interactive treasure hunt across the terminal.",
     url: "/",
-    siteName: "Techo International Airport — Experience",
+    siteName: "Techo International Airport Experience",
     type: "website",
     images: [OG_IMAGE],
   },
@@ -71,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${editorial.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body>
         {children}
         <SpeedInsights />

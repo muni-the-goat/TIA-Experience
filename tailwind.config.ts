@@ -45,12 +45,11 @@ const config: Config = {
       },
       fontFamily: {
         display: ["var(--font-display)", '"Titillium Web"', "system-ui", "sans-serif"],
-        editorial: ["var(--font-editorial)", '"Cormorant Garamond"', "Georgia", "Times New Roman", "serif"],
         body: [
+          "var(--font-body)",
+          '"Inter"',
           "-apple-system",
           "BlinkMacSystemFont",
-          '"SF Pro Display"',
-          '"Inter"',
           '"Segoe UI"',
           "Roboto",
           "sans-serif",

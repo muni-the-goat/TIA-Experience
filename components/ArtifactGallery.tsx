@@ -489,11 +489,11 @@ export default function ArtifactGallery() {
             className="mt-6 max-w-xl text-center md:mt-7"
             style={{ animation: "fadeUp 0.6s var(--ease-tia)" }}
           >
-            <p className="font-editorial text-2xl italic text-teal">{artifacts[active].name}</p>
+            <p className="font-display text-2xl text-teal">{artifacts[active].name}</p>
             <p className="mt-1 text-xs text-teal-2/70">
               {artifacts[active].origin} · {artifacts[active].material}
             </p>
-            <p className="mt-4 text-pretty font-editorial text-base font-medium leading-snug text-teal md:mt-5 md:text-xl">
+            <p className="mt-4 text-pretty font-display text-base font-medium leading-snug text-teal md:mt-5 md:text-xl">
               {artifacts[active].blurb}
             </p>
           </div>
@@ -501,7 +501,7 @@ export default function ArtifactGallery() {
           {/* Mobile timeline scrubber — Getty-style, pinned to the bottom of the
               stage so it only shows while the gallery is in view. */}
           <div className="absolute inset-x-6 bottom-6 flex items-center gap-3 md:hidden">
-            <span className="whitespace-nowrap font-editorial text-xs italic text-teal-2">
+            <span className="whitespace-nowrap font-display text-xs text-teal-2">
               {artifacts[active].index} / {String(artifacts.length).padStart(2, "0")}
             </span>
             <span className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-teal/15">
@@ -523,11 +523,11 @@ export default function ArtifactGallery() {
 
       {/* ── End cap → treasure hunt ── */}
       <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center px-6 py-24 text-center">
-        <p className="font-editorial text-3xl italic text-brown-3 md:text-4xl">
+        <p className="font-display text-3xl text-brown-3 md:text-4xl">
           That was only the beginning.
         </p>
         <p className="mt-5 max-w-md text-sm leading-relaxed text-teal-2">
-          The artifacts are half the story. Five hidden treasures wait across the terminal —
+          The artifacts are half the story. Five hidden treasures wait across the terminal,
           ready for you to find.
         </p>
         <a
@@ -544,7 +544,7 @@ export default function ArtifactGallery() {
         aria-hidden
         className="tia-progress pointer-events-none fixed right-6 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-3 lg:flex"
       >
-        <span className="font-editorial text-sm italic text-teal-2">
+        <span className="font-display text-sm text-teal-2">
           {artifacts[active].name}
         </span>
         <span className="relative block h-28 w-[3px] overflow-hidden rounded-full bg-teal/15">

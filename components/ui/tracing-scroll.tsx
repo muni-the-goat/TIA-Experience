@@ -176,7 +176,7 @@ export default function TracingScroll({
 
         {/* Legibility scrim — stronger on the left where the text sits (#876C51) */}
         <div
-          className="ts-chrome pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(135,108,81,0.92)_0%,rgba(135,108,81,0.72)_34%,rgba(135,108,81,0.28)_64%,transparent_92%)]"
+          className="ts-chrome pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(135,108,81,0.66)_0%,rgba(135,108,81,0.42)_30%,rgba(135,108,81,0.12)_55%,transparent_78%)]"
         />
         {label ? (
           <div className="ts-chrome pointer-events-none absolute left-0 top-1/2 flex -translate-y-[120px] items-center gap-4 px-8 md:-translate-y-[168px] md:px-14 lg:px-24">
@@ -196,7 +196,7 @@ export default function TracingScroll({
               <span className="ts-num block font-display text-xs font-bold uppercase tracking-[0.45em] text-gold-3">
                 {s.num}
               </span>
-              <h3 className="ts-title mt-3 font-editorial text-4xl italic leading-tight text-white [text-shadow:0_2px_20px_rgba(9,59,63,0.6)] md:text-5xl">
+              <h3 className="ts-title mt-3 font-display text-4xl leading-tight text-white [text-shadow:0_2px_20px_rgba(9,59,63,0.6)] md:text-5xl">
                 {s.title}
               </h3>
               <p className="ts-body mt-4 text-pretty text-sm font-light leading-relaxed text-sand-4 [text-shadow:0_1px_14px_rgba(9,59,63,0.55)] md:text-base">

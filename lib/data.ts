@@ -28,10 +28,10 @@ export const artifacts: Artifact[] = [
     index: "01",
     name: "Garuda & the Naga",
     era: "Angkorian Tradition",
-    origin: "Khmer Hindu–Buddhist canon",
+    origin: "Khmer Hindu-Buddhist canon",
     material: "Carved Sandstone",
     blurb:
-      "The divine eagle and mount of Vishnu rises with wings unfurled, the serpent-nagas coiled in his grasp — the eternal struggle of sky and water, held in stone.",
+      "The divine eagle and mount of Vishnu rises with wings unfurled, the serpent-nagas coiled in his grasp, the eternal struggle of sky and water, held in stone.",
     motif: "garuda",
     hue: "#D6A63A",
     image: "/artifacts/IMG_2089.webp",
@@ -52,12 +52,12 @@ export const artifacts: Artifact[] = [
   {
     id: "prasat-face",
     index: "03",
-    name: "Prasat — The Face Tower",
+    name: "Prasat: The Face Tower",
     era: "Bayon Tradition",
     origin: "Inspired by Angkor Thom",
     material: "Carved Sandstone",
     blurb:
-      "A serene face gazes from the summit of the prasat, echoing the great towers of the Bayon — where the king was said to watch over his kingdom in every direction at once.",
+      "A serene face gazes from the summit of the prasat, echoing the great towers of the Bayon, where the king was said to watch over his kingdom in every direction at once.",
     motif: "temple",
     hue: "#093B3F",
     image: "/artifacts/IMG_2078.webp",
@@ -83,7 +83,7 @@ export const artifacts: Artifact[] = [
     origin: "Kingdom of Cambodia",
     material: "Carved Sandstone",
     blurb:
-      "Many-armed and serene, the bodhisattva of infinite compassion extends his hands to every being — a vision of mercy that flourished across the Khmer empire.",
+      "Many-armed and serene, the bodhisattva of infinite compassion extends his hands to every being, a vision of mercy that flourished across the Khmer empire.",
     motif: "lotus",
     hue: "#775134",
     image: "/artifacts/IMG_2088.webp",
@@ -96,7 +96,7 @@ export const artifacts: Artifact[] = [
     origin: "Kingdom of Cambodia",
     material: "Carved Sandstone",
     blurb:
-      "Crowned and poised upon a blossoming lotus, the tevoda bears the sacred vessel of abundance — a guardian spirit of grace, and a welcome to every traveller.",
+      "Crowned and poised upon a blossoming lotus, the tevoda bears the sacred vessel of abundance, a guardian spirit of grace, and a welcome to every traveller.",
     motif: "apsara",
     hue: "#DCB55F",
     image: "/artifacts/IMG_2093.webp",
@@ -106,10 +106,10 @@ export const artifacts: Artifact[] = [
     index: "07",
     name: "Harihara, the Twofold God",
     era: "Pre-Angkorian Tradition",
-    origin: "Kingdom of Funan–Chenla",
+    origin: "Kingdom of Funan-Chenla",
     material: "Carved Sandstone",
     blurb:
-      "One body, two divinities — Vishnu and Shiva united in a single form. Harihara embodies the harmony of opposing forces, a vision of wholeness from Cambodia's earliest kingdoms.",
+      "One body, two divinities: Vishnu and Shiva united in a single form. Harihara embodies the harmony of opposing forces, a vision of wholeness from Cambodia's earliest kingdoms.",
     motif: "lotus",
     hue: "#3C6669",
     image: "/artifacts/IMG_2079.webp",
@@ -174,7 +174,7 @@ export const artifacts: Artifact[] = [
     origin: "Kingdom of Cambodia",
     material: "Carved Sandstone",
     blurb:
-      "As the storm raged, the serpent-king Mucalinda rose to shield the meditating Buddha beneath his seven hoods — water and wisdom, stilled into a single moment of peace.",
+      "As the storm raged, the serpent-king Mucalinda rose to shield the meditating Buddha beneath his seven hoods, water and wisdom stilled into a single moment of peace.",
     motif: "naga",
     hue: "#D6A63A",
     image: "/artifacts/IMG_2091.webp",
@@ -225,7 +225,7 @@ export const treasures: Treasure[] = [
     zone: "Departure Gates B",
     title: "The Gilded Wing",
     riddle:
-      "Half-man, half-bird, he carries gods between worlds — fitting, then, that he waits where journeys begin.",
+      "Half-man, half-bird, he carries gods between worlds. Fitting, then, that he waits where journeys begin.",
     hint: "Garuda watches over the Gate B boarding lounge.",
     reward: "Garuda Seal",
     x: 76,
@@ -276,6 +276,6 @@ export const huntSteps = [
   {
     step: "04",
     title: "Claim your reward",
-    body: "Find all five and unlock a commemorative Angkor keepsake — redeemable at the Heritage Walk gift pavilion.",
+    body: "Find all five and unlock a commemorative Angkor keepsake, redeemable at the Heritage Walk gift pavilion.",
   },
 ];

@@ -132,7 +132,7 @@ export function ArtifactLightbox({
                     <DialogPrimitive.Title asChild>
                       <motion.h2
                         variants={line}
-                        className="font-editorial text-3xl font-medium leading-tight text-teal md:text-4xl"
+                        className="font-display text-3xl font-medium leading-tight text-teal md:text-4xl"
                       >
                         {shown.name}
                       </motion.h2>
@@ -155,7 +155,7 @@ export function ArtifactLightbox({
                     <DialogPrimitive.Description asChild>
                       <motion.p
                         variants={line}
-                        className="font-editorial text-lg leading-relaxed text-teal-2 md:text-xl"
+                        className="font-display text-lg leading-relaxed text-teal-2 md:text-xl"
                       >
                         {shown.blurb}
                       </motion.p>

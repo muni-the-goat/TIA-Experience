@@ -48,7 +48,7 @@ const HOW_STEPS: TracingStep[] = [
     body: (
       <>
         Artifacts are placed across{" "}
-        <span className="font-medium text-white">all of the gates inside the terminal</span> — wherever
+        <span className="font-medium text-white">all of the gates inside the terminal</span>. Wherever
         your journey takes you, treasures are close by.
       </>
     ),
@@ -70,7 +70,7 @@ const HOW_STEPS: TracingStep[] = [
     title: "No need to find them all",
     body: (
       <>
-        For security, you can only reach your own gate — so finding every artifact isn&rsquo;t possible,
+        For security, you can only reach your own gate, so finding every artifact isn&rsquo;t possible,
         and <span className="font-medium text-white">you don&rsquo;t need to</span>. Enjoy the two at your gate.
       </>
     ),
@@ -186,10 +186,6 @@ export default function TreasureHunt() {
       <div className="relative z-10 mx-auto max-w-content px-6">
         {/* Header */}
         <div className="th-head mx-auto max-w-3xl text-center">
-          <p className="mb-5 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-brown">
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-gold text-[11px] leading-none tracking-normal text-white">03</span>
-            The Treasure Hunt
-          </p>
           <h2 className="font-display text-5xl font-bold leading-[0.95] tracking-tight text-teal md:text-7xl">
             {LINE_1.map((w) => (
               <span key={w} className="th-word mx-[0.12em] inline-block will-change-transform">
@@ -227,7 +223,7 @@ export default function TreasureHunt() {
           <div className="relative min-h-[440px] overflow-hidden rounded-3xl border border-gold/30 bg-teal lg:min-h-[620px]">
             <iframe
               src={MAP_SRC}
-              title="Techo International Airport — interactive 3D terminal map"
+              title="Techo International Airport interactive 3D terminal map"
               loading="lazy"
               allow="fullscreen; accelerometer; gyroscope; magnetometer"
               className="absolute inset-0 h-full w-full border-0"
